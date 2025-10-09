@@ -499,3 +499,5 @@ dialog::backdrop{
   padding: 8px 8px;      /* prima 10px */
   white-space: nowrap;   /* evita a capo su etichette corte */
 }
+
+.fc-daygrid-day, .fc-daygrid-day-number { cursor: pointer; }
