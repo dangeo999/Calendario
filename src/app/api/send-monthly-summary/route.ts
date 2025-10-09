@@ -1,71 +1,40 @@
-// src/app/api/send-monthly-summary/route.ts
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { createServerClient } from '@supabase/ssr'
 import nodemailer from 'nodemailer'
 import { supabaseAdmin } from '@/app/lib/supabaseAdmin'
 import { renderMonthlySummaryEmail } from '@/app/emails/monthlySummary'
 
-/** ---- helper: controlla se l'utente loggato è ADMIN/MANAGER ---- */
-async function isAdminFromProfiles() {
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get: (name) => cookieStore.get(name)?.value,
-      },
-    }
-  )
-
-  const { data: uRes } = await supabase.auth.getUser()
-  const user = uRes?.user
-  if (!user) return false
-
-  const { data: prof } = await supabase
-    .from('profiles')
-    .select('is_admin, role')
-    .eq('id', user.id)
-    .single()
-
-  return !!(prof?.is_admin || prof?.role === 'MANAGER')
-}
-
-/** ---- invio email riepilogo mese ---- */
+// --- helper comuni ---
 async function sendMonthlySummary(year: number, month: number) {
-  // 1) dati riepilogo dal DB
+  // 3) Dati riepilogo
   const { data: rows, error: sumErr } = await supabaseAdmin
     .from('v_monthly_summaries')
-    .select(
-      'user_id,name,year,month,ferie_days,smart_days,malattia_days,perm_entrata_count,perm_uscita_count'
-    )
+    .select('user_id,name,year,month,ferie_days,smart_days,malattia_days,perm_entrata_count,perm_uscita_count')
     .eq('year', year)
     .eq('month', month)
+    .order('name', { ascending: true })
   if (sumErr) throw sumErr
 
-  // 2) destinatari admin via RPC
+  // 4) Destinatari tramite RPC
   type AdminEmailRow = { id: string; email: string | null }
   const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('admin_emails', {})
   if (rpcErr) throw rpcErr
-  const recipients = (rpcData ?? [])
-    .map((r: AdminEmailRow) => r.email)
-    .filter((e: string | null): e is string => !!e && e.length > 0)
+  const adminEmails = (rpcData ?? []) as AdminEmailRow[]
+  const recipients = adminEmails.map(r => r.email).filter((e): e is string => !!e && e.length > 0)
 
-  // fallback opzionale per test
+  // Fallback opzionale (dev)
   const fallback = (process.env.MAIL_TO_TEST ?? '')
     .split(',')
-    .map((s) => s.trim())
+    .map(s => s.trim())
     .filter(Boolean)
 
   const finalRecipients = recipients.length ? recipients : fallback
-  if (!finalRecipients.length) {
+  if (finalRecipients.length === 0) {
     return { ok: false, recipients, message: 'Nessun admin con email (e nessun MAIL_TO_TEST).' }
   }
 
+  // 5) Invio email
   const html = renderMonthlySummaryEmail(rows ?? [], year, month)
   const subject = `Riepilogo mese ${String(month).padStart(2, '0')}/${year}`
 
@@ -86,23 +55,18 @@ async function sendMonthlySummary(year: number, month: number) {
   return { ok: true, recipients: finalRecipients, messageId: info.messageId }
 }
 
-/** ---- POST (bottone/test manuale) ---- */
+// --- POST manuale (bottone/test) ---
 export async function POST(req: Request) {
   try {
-    let payload: any = {}
-    try {
-      payload = await req.json()
-    } catch {}
+    let payload: unknown = {}
+    try { payload = await req.json() } catch {}
+    const p = payload as { year?: number; month?: number; secret?: string }
     const now = new Date()
-    const year = Number(payload?.year ?? now.getFullYear())
-    const month = Number(payload?.month ?? now.getMonth() + 1)
-    const secret = String(payload?.secret ?? '')
+    const year  = Number(p?.year ?? now.getFullYear())
+    const month = Number(p?.month ?? (now.getMonth() + 1))
+    const secret = String(p?.secret ?? '')
 
-    // Autorizzazione: o secret valido, o utente admin/manager
-    const secretOk = !!process.env.CRON_SECRET && secret === process.env.CRON_SECRET
-    const adminOk = await isAdminFromProfiles()
-
-    if (!secretOk && !adminOk) {
+    if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -114,17 +78,14 @@ export async function POST(req: Request) {
   }
 }
 
-/** ---- util fuso Europe/Rome ---- */
+// --- helper: fuso Europe/Rome ---
 function romeParts(d = new Date()) {
   const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Europe/Rome',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
+    timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit'
   }).formatToParts(d)
-  const y = Number(parts.find((p) => p.type === 'year')!.value)
-  const m = Number(parts.find((p) => p.type === 'month')!.value)
-  const day = Number(parts.find((p) => p.type === 'day')!.value)
+  const y = Number(parts.find(p => p.type === 'year')!.value)
+  const m = Number(parts.find(p => p.type === 'month')!.value)
+  const day = Number(parts.find(p => p.type === 'day')!.value)
   return { y, m, day }
 }
 function isSecondMondayRome(d = new Date()) {
@@ -136,7 +97,7 @@ function isSecondMondayRome(d = new Date()) {
   return day === secondMonday
 }
 
-/** ---- GET per Vercel Cron ---- */
+// --- GET per Vercel Cron ---
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url)
@@ -144,7 +105,7 @@ export async function GET(req: Request) {
     const ua = req.headers.get('user-agent') || ''
     const isVercelCron = ua.includes('vercel-cron/1.0')
 
-    // Consenti a) cron Vercel, b) secret valido (per test manuali)
+    // Consenti: a) cron Vercel, b) secret valido (per test manuali)
     if (process.env.CRON_SECRET && !isVercelCron && secret !== process.env.CRON_SECRET) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
