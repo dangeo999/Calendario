@@ -30,7 +30,7 @@ async function createSSRClient() {
     }
   )
 }
-
+ 
 /* ------------------------ Admin check su profiles ---------------------- */
 async function isAdminFromProfiles(userId: string): Promise<boolean> {
   const { data: prof } = await supabaseAdmin
