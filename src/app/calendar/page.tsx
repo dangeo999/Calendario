@@ -354,6 +354,21 @@ useEffect(() => {
     setOpen(true)
     setTimeout(() => dlgRef.current?.showModal(), 0)
   }
+  const onDateClick = (info: { dateStr: string }) => {
+    const day = toDateInput(info.dateStr)
+    setDraft({
+      mode: 'create',
+      date: day,
+      startDate: day,
+      endDate: day,
+      time: '09:00',
+      durationHours: 1,
+      type: 'SMART_WORKING',
+      note: ''
+    })
+    setOpen(true)
+    setTimeout(() => dlgRef.current?.showModal(), 0)
+  }
 
   const onEventClick = (clickInfo: any) => {
     const e = clickInfo.event
@@ -672,7 +687,11 @@ const handleSendEmail = async () => {
           selectable
           selectMirror
           select={onSelect}
+          dateClick={onDateClick}              // 👈 tap singolo su un giorno
           eventClick={onEventClick}
+          selectLongPressDelay={200}           // 👈 riduce il long-press su iOS/Android
+          eventLongPressDelay={200}
+          selectMinDistance={1}                // 👈 evita dover trascinare “troppo”
           locale={itLocale}
           headerToolbar={false}
           buttonText={{ today: 'oggi', month: 'mese', week: 'settimana', day: 'giorno' }}
