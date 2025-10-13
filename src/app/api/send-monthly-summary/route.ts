@@ -39,7 +39,7 @@ async function isAdminFromProfiles(userId: string): Promise<boolean> {
     .eq('id', userId)
     .maybeSingle()
 
-  return prof?.is_admin === true || prof?.role === 'ADMIN'
+  return prof?.is_admin === true || prof?.role === 'MANAGER'
 }
 
 /* ----------------------------- Authorization --------------------------- */
