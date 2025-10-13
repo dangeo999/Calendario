@@ -144,15 +144,12 @@ export default function CalendarPage() {
   try {
     setSendingMail(true)
     const res = await fetch('/api/send-monthly-summary', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        year: y,
-        month: m,
-        // deve combaciare con process.env.CRON_SECRET lato server
-        secret: process.env.NEXT_PUBLIC_CRON_SECRET ?? ''
-      })
-    })
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ year: y, month: m }),
+    credentials: 'include',
+  })
+
     const js = await res.json()
     if (!res.ok) throw new Error(js?.error || 'Invio fallito')
     alert(`Riepilogo ${String(m).padStart(2,'0')}/${y} inviato a: ${js.recipients?.join(', ') || 'nessuno'}`)
@@ -505,10 +502,12 @@ const handleSendEmail = async () => {
   const m = viewDate.getMonth() + 1
   try{
     const res = await fetch('/api/send-monthly-summary', {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify({ year: y, month: m, secret: process.env.NEXT_PUBLIC_CRON_SECRET ?? '' })
-    })
+    method: 'POST',
+    headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify({ year: y, month: m }),
+    credentials: 'include',
+  })
+
     const js = await res.json()
     if (!res.ok) throw new Error(js?.error || 'Invio fallito')
     alert(`Riepilogo ${String(m).padStart(2,'0')}/${y} inviato a: ${js.recipients?.join(', ') || 'nessuno'}`)
