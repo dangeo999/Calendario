@@ -37,7 +37,7 @@ export async function POST(req: Request) {
 
     /** -------------------- 1) Risolvi destinatario singolo -------------------- */
     const { data: userRow, error: userErr } = await supabaseAdmin
-      .schema('auth')
+      .schema('profiles')
       .from('users')
       .select('id, email')
       .eq('id', TARGET_USER_ID)
