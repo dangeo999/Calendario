@@ -5,24 +5,23 @@ export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
 
-// Protezione opzionale con secret
+// ▼ opzionale: semplice secret per proteggere l'endpoint
 const REQUIRE_SECRET = true
 
 export async function POST(req: Request) {
   try {
-    // --- sicurezza semplice ---
+    // --- protezione semplice con secret (facoltativo) ---
     if (REQUIRE_SECRET) {
-      let payload: any = {}
-      try { payload = await req.json() } catch {}
-      const secret = String(payload?.secret ?? '')
+      let body: any = {}
+      try { body = await req.json() } catch {}
+      const secret = String(body?.secret ?? '')
       if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
         return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
       }
     }
 
-    // --- destinatario fisso, niente lookup ---
-    const toEmail =
-      process.env.REPORT_RECIPIENT ?? 'd.neroni@geoconsultinformatica.it'
+    // --- DESTINATARIO FISSO: nessuna lookup ---
+    const toEmail = process.env.REPORT_RECIPIENT ?? 'd.neroni@geoconsultinformatica.it'
 
     // --- SMTP transporter ---
     const transporter = nodemailer.createTransport({
@@ -38,12 +37,12 @@ export async function POST(req: Request) {
     const now = new Date()
     const subject = `Riepilogo ${now.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`
 
-    // HTML semplice per prova (nessun render esterno)
+    // HTML semplice: nessun renderer esterno
     const html = `
       <div style="font-family:system-ui,Segoe UI,Arial">
         <h2>Riepilogo mensile (test)</h2>
-        <p>Ciao Daniele,<br/>questo è un invio di test senza lookup.</p>
-        <p style="font-size:12px;color:#666">Ora server: ${now.toISOString()}</p>
+        <p>Invio senza lookup, destinatario fisso.</p>
+        <p style="font-size:12px;color:#666">Server time: ${now.toISOString()}</p>
       </div>
     `
 
