@@ -4,14 +4,13 @@ export const dynamic = 'force-dynamic'
 
 import { NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
-import { renderMonthlySummaryEmail } from '@/app/emails/monthlySummary' // se lo usi
 
-// ⚠️ Per evitare abusi, tieni una semplice protezione via secret nell body
+// Protezione opzionale con secret
 const REQUIRE_SECRET = true
 
 export async function POST(req: Request) {
   try {
-    // ---- sicurezza semplice (facoltativa ma consigliata) ----
+    // --- sicurezza semplice ---
     if (REQUIRE_SECRET) {
       let payload: any = {}
       try { payload = await req.json() } catch {}
@@ -21,12 +20,11 @@ export async function POST(req: Request) {
       }
     }
 
-    // ---- DESTINATARIO UNICO, SENZA LOOKUP ----
+    // --- destinatario fisso, niente lookup ---
     const toEmail =
-      process.env.REPORT_RECIPIENT // imposta su Vercel
-      ?? 'd.neroni@geoconsultinformatica.it' // fallback hard-coded
+      process.env.REPORT_RECIPIENT ?? 'd.neroni@geoconsultinformatica.it'
 
-    // ---- SMTP ----
+    // --- SMTP transporter ---
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST!,
       port: Number(process.env.SMTP_PORT ?? 587),
@@ -40,10 +38,14 @@ export async function POST(req: Request) {
     const now = new Date()
     const subject = `Riepilogo ${now.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`
 
-    // Se hai un renderer HTML, usa quello. Altrimenti testo semplice per prova:
-    const html = renderMonthlySummaryEmail
-      ? renderMonthlySummaryEmail(/* dati */)
-      : `<p>Ciao, questo è un test di invio riepilogo.</p>`
+    // HTML semplice per prova (nessun render esterno)
+    const html = `
+      <div style="font-family:system-ui,Segoe UI,Arial">
+        <h2>Riepilogo mensile (test)</h2>
+        <p>Ciao Daniele,<br/>questo è un invio di test senza lookup.</p>
+        <p style="font-size:12px;color:#666">Ora server: ${now.toISOString()}</p>
+      </div>
+    `
 
     await transporter.sendMail({
       from: process.env.MAIL_FROM ?? process.env.SMTP_USER,
