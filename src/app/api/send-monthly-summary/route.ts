@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
 
 // ▼ opzionale: semplice secret per proteggere l'endpoint
-const REQUIRE_SECRET = true
+const REQUIRE_SECRET = false
 
 export async function POST(req: Request) {
   try {
