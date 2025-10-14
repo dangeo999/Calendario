@@ -32,6 +32,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, sent_to: toEmail })
   } catch (err: any) {
+     console.error('SMTP error:', err);
     return NextResponse.json(
       {
         error: 'send-failed',
