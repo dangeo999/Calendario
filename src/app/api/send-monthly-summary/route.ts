@@ -50,7 +50,11 @@ export async function POST(req: Request) {
       )
     }
 
-    const toEmail = userRow?.email
+    // nel route /send-monthly-summary
+const toEmail =
+  process.env.TEST_RECIPIENT            // metti questo env su Vercel
+  ?? 'd.neroni@geoconsultinformatica.it';        // fallback hard-coded per test
+
     if (!toEmail) {
       return NextResponse.json(
         { error: 'recipient-missing-email', details: `Nessuna email trovata per user ${TARGET_USER_ID}` },
