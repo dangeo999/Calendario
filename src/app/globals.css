@@ -192,14 +192,16 @@ body{
   border-radius:var(--radius);
   padding:8px;
 }
-dialog.modal{ border:none; padding:0; background:transparent }
+dialog.modal{ border:none; padding:0; background:transparent; align-self: center; justify-self: center; }
 .panel{
-  width:min(520px, 92vw);
+  width:min(520px, 80vw);
+  place-self:center;
   background:var(--md-sys-color-surface-1);
   border:1px solid var(--md-sys-color-outline);
   border-radius: var(--radius);
   padding:14px;
 }
+
 .panel__header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px }
 .panel__title{ font-weight:700 }
 .panel__actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:14px }
