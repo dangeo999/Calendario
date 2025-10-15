@@ -18,6 +18,7 @@ type UiType =
   | 'PERMESSO_ENTRATA'
   | 'PERMESSO_USCITA'
   | 'MALATTIA'
+  | 'PERMESSO_STUDIO'
 
 // DbType
 type DbType =
@@ -26,6 +27,7 @@ type DbType =
   | 'PERMESSO_ENTRATA_ANTICIPATA'
   | 'PERMESSO_USCITA_ANTICIPATA'
   | 'MALATTIA'
+  | 'PERMESSO_STUDIO'
 
 type Draft = {
   id?: string
@@ -43,7 +45,7 @@ const PERM_COUNTS_ARE_MINUTES = false;   // ← metti a false quando sistemi la 
 const toHours = (x: number | null | undefined) =>
   Math.round(((Number(x || 0)) / (PERM_COUNTS_ARE_MINUTES ? 60 : 1)) * 100) / 100;
 
-const isPermesso = (t: UiType) => t === 'PERMESSO_ENTRATA' || t === 'PERMESSO_USCITA'
+const isPermesso = (t: UiType) => t === 'PERMESSO_ENTRATA' || t === 'PERMESSO_USCITA' || t === 'PERMESSO_STUDIO'
 const toHHmm = (d: Date) => String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0')
 
 // ---- utils date ----
@@ -64,6 +66,7 @@ const labelOfType = (dbType: DbType) =>
     PERMESSO_ENTRATA_ANTICIPATA: 'PERMESSO ENTRATA',
     PERMESSO_USCITA_ANTICIPATA: 'PERMESSO USCITA',
     MALATTIA: 'MALATTIA',
+    PERMESSO_STUDIO: 'PERMESSO STUDIO',
   } as Record<DbType, string>)[dbType]
 
 const dbTypeOf = (t: UiType): DbType => {
@@ -217,16 +220,26 @@ export default function CalendarPage() {
   // ---------- NAME HELPER ----------
   const nameOf = (uid: string) => {
     const p = profiles.find(p => p.id === uid)
-    if (p?.full_name) return p.full_name
-    if (uid === authUser?.id) {
-      return authUser?.user_metadata?.full_name
-          || authUser?.user_metadata?.name
-          || authUser?.email
-          || 'Tu'
-    }
-    return 'Utente'
-  }
+    let full =
+      p?.full_name ||
+      (uid === authUser?.id
+        ? (authUser?.user_metadata?.full_name || authUser?.user_metadata?.name || authUser?.email || 'Tu')
+        : 'Utente')
 
+    // Se vista mobile, mostra solo iniziali (es. "Mario Rossi" -> "MR")
+    if (typeof window !== 'undefined' && window.innerWidth < 900 && full) {
+      const parts = String(full).trim().split(/\s+/).filter(Boolean)
+      if (parts.length === 1) {
+        // Se è un'unica parola (es. username/email), prendi prime due lettere
+        const word = parts[0].replace(/@.*/, '')
+        const a = word.charAt(0).toUpperCase()
+        const b = word.charAt(1) ? word.charAt(1).toUpperCase() : ''
+        return a + b
+      }
+      return parts.map(w => w[0]?.toUpperCase() || '').filter(Boolean).join('')
+    }
+    return full
+  }
   // ---------- FILTERED EVENTS (per il calendario) ----------
   const filtered = useMemo(
     () =>
@@ -269,6 +282,7 @@ export default function CalendarPage() {
     malattia_days: number
     perm_entrata_count: number
     perm_uscita_count: number
+    perm_studio_count: number
   }
   const [monthSummary, setMonthSummary] = useState<MonthlyRow[]>([])
 
@@ -278,7 +292,7 @@ export default function CalendarPage() {
 
     let q = supabase
       .from('v_monthly_summaries')
-      .select('user_id,name,year,month,ferie_days,smart_days,malattia_days,perm_entrata_count,perm_uscita_count')
+      .select('user_id,name,year,month,ferie_days,smart_days,malattia_days,perm_entrata_count,perm_uscita_count,perm_studio_count')
       .eq('year', y)
       .eq('month', m)
       .order('name', { ascending: true })
@@ -398,7 +412,7 @@ useEffect(() => {
         date: startInc,
         startDate: startInc,
         endDate: endInc,
-        type: uiT,
+        type: uiTypeOf(type as DbType),
         note: (note as string) ?? ''
       })
     }
@@ -548,7 +562,7 @@ const handleSendEmail = async () => {
           <span className="m-event__dot" />
           <span>{arg.event.title}</span>
         </div>
-        <div className="m-event__type">{labelOfType(typeDb)}</div>
+        {/*<div className="m-event__type">{labelOfType(typeDb)}</div>*/}
       </div>
     )
   }
@@ -596,7 +610,7 @@ const handleSendEmail = async () => {
               onChange={e => setFilterType(e.target.value as 'ALL' | DbType)}
             >
               <option value="ALL">Tutti i tipi</option>
-              {(['FERIE', 'SMART_WORKING', 'PERMESSO_ENTRATA_ANTICIPATA', 'PERMESSO_USCITA_ANTICIPATA', 'MALATTIA'] as DbType[]).map(t => (
+              {(['FERIE', 'SMART_WORKING', 'PERMESSO_ENTRATA_ANTICIPATA', 'PERMESSO_USCITA_ANTICIPATA', 'MALATTIA','PERMESSO_STUDIO'] as DbType[]).map(t => (
                 <option key={t} value={t}>{labelOfType(t)}</option>
               ))}
             </select>
@@ -655,6 +669,7 @@ const handleSendEmail = async () => {
                     <th>Malattia (gg)</th>
                     <th>Perm. Entrata (h)</th>
                     <th>Perm. Uscita (h)</th>
+                    <th>Perm. Studio (h)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -666,6 +681,7 @@ const handleSendEmail = async () => {
                       <td>{r.malattia_days}</td>
                       <td>{toHours(r.perm_entrata_count)}</td>
                       <td>{toHours(r.perm_uscita_count)}</td>
+                      <td>{toHours(r.perm_studio_count)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -741,6 +757,7 @@ const handleSendEmail = async () => {
               <span className="legend__pill"><i className="dot dot--entrata" />Permesso entrata</span>
               <span className="legend__pill"><i className="dot dot--uscita" />Permesso uscita</span>
               <span className="legend__pill"><i className="dot dot--malattia" />Malattia</span>
+              <span className="legend__pill"><i className="dot dot--studio" />Permesso studio</span>
             </div>
           </div>
       </div>
@@ -843,6 +860,7 @@ const handleSendEmail = async () => {
                   { val:'PERMESSO_ENTRATA', label:'Permesso entrata', icon:'login' },
                   { val:'PERMESSO_USCITA', label:'Permesso uscita', icon:'logout' },
                   { val:'MALATTIA', label:'Malattia', icon:'sick' },
+                  { val:'PERMESSO_STUDIO', label:'Permesso studio', icon:'school' },
                 ] as {val:UiType,label:string,icon:string}[]).map(opt => (
                   <button
                     key={opt.val}

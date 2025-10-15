@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 /* ===========================
    Material 3 – Design tokens (LIGHT)
    =========================== */
@@ -22,10 +24,12 @@
   --md-elev-2: 0 3px 12px rgba(0,0,0,.08);
   --md-elev-3: 0 10px 24px rgba(0,0,0,.10);
 
-  --evt-ferie:#d93025;   /* rosso Google */
-  --evt-smart:#188038;   /* verde Google */
-  --evt-entrata:#1a73e8; /* blu */
-  --evt-uscita:#6750a4;  /* indigo */
+  --evt-ferie:      #e53935;  /* rosso vivo Google */
+  --evt-smart:      #00897b;  /* verde teal deciso */
+  --evt-entrata:    #1e88e5;  /* blu acceso */
+  --evt-uscita:     #5e35b1;  /* viola profondo */
+  --evt-malattia:   #d81b60;  /* fucsia/rosa intenso */
+  --evt-studio:     #f9a825;  /* giallo senape intenso */
 
   --radius: 14px;
 }
@@ -34,6 +38,9 @@
 *{ box-sizing: border-box }
 html,body{ height:100% }
 body{
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
   margin:0;
   font-family:var(--md-sys-font);
   color:var(--md-sys-color-on-surface);
@@ -41,7 +48,7 @@ body{
     radial-gradient(1000px 500px at 12% -10%, #eaf2ff 0%, transparent 60%),
     var(--md-sys-color-surface);
 }
-.container{ max-width:1100px; margin:20px auto; padding:0 16px }
+.container{ max-width:1200px; margin:20px auto; padding:0 16px }
 
 /* Elevation helpers */
 .m-elev-1{ box-shadow: var(--md-elev-1) }
@@ -51,18 +58,22 @@ body{
 /* =================
    App Bar / Toolbar
    ================= */
-.appbar{
-  position:sticky; top:8px; z-index:50;
-  display:flex; align-items:center; justify-content:space-between;
-  background:var(--md-sys-color-surface-1);
-  border:1px solid var(--md-sys-color-outline);
+.appbar {
+  position: relative;
+  z-index: 10; /* basta 10 se il resto è 0 */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--md-sys-color-surface-1);
+  border: 1px solid var(--md-sys-color-outline);
   border-radius: var(--radius);
-  padding:8px 12px;
-  gap:12px;
+  padding: 8px 12px;
+  gap: 12px;
+  box-shadow: var(--md-elev-1); /* leggero sollevamento */
 }
 
-.appbar__left{ display:flex; align-items:center; gap:12px }
-.appbar__logo{ font-size:22px; color:var(--md-sys-color-primary) }
+.appbar__left{ display:flex; align-items:center; gap:10px }
+.appbar__logo{ font-size:20px; color:var(--md-sys-color-primary) }
 .appbar__title{ font-weight:700; letter-spacing:.2px }
 
 /* =================
@@ -81,7 +92,7 @@ body{
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,.7),
     0 3px 8px rgba(0,0,0,.06);
-  font-weight:600; letter-spacing:.2px;
+  font-weight:400; letter-spacing:.2px;
   transition: background .18s, border-color .18s, box-shadow .18s, transform .02s;
 }
 .legend__pill:hover{
@@ -101,13 +112,15 @@ body{
 .legend__pill:has(.dot--smart)   { --col: var(--evt-smart); }
 .legend__pill:has(.dot--entrata) { --col: var(--evt-entrata); }
 .legend__pill:has(.dot--uscita)  { --col: var(--evt-uscita); }
-.legend__pill:has(.dot--malattia){ --col: #b97bff; }
+.legend__pill:has(.dot--malattia){ --col: var(--evt-malattia); }
+.legend__pill:has(.dot--studio){ --col: var(--evt-studio); } /* arancione permesso studio */
 .dot{ width:10px; height:10px; border-radius:999px; display:inline-block }
 .dot--ferie{ background: var(--evt-ferie) }
 .dot--smart{ background: var(--evt-smart) }
 .dot--entrata{ background: var(--evt-entrata) }
 .dot--uscita{ background: var(--evt-uscita) }
-.dot--malattia{ background: #b97bff }
+.dot--malattia{ background: var(--evt-malattia) }
+.dot--studio{ background: var(--evt-studio) } /* arancione permesso studio */
 
 /* =========================
    Inputs / Buttons / Icons
@@ -178,7 +191,6 @@ body{
    Card / Panel / Dialog
    ================ */
 .card{
-  background:var(--md-sys-color-surface-1);
   border:1px solid var(--md-sys-color-outline);
   border-radius:var(--radius);
   padding:8px;
@@ -240,48 +252,49 @@ dialog.modal{ border:none; padding:0; background:transparent }
   display:block;
   border-radius:12px;
   padding:6px 8px;
-  margin:2px 0;
-  background: #fff;
-  border:2px solid var(--evt-col, var(--md-sys-color-outline));
+  margin:4px auto;
+  background: color-mix(in srgb, var(--evt-col, #000) 6%, transparent);
+  border:1px solid var(--evt-col, var(--md-sys-color-outline));
   box-shadow:
     var(--md-elev-1),
-    0 0 0 3px color-mix(in srgb, var(--evt-col, #000) 12%, transparent);
+    0 0 0 2px color-mix(in srgb, var(--evt-col, #000) 12%, transparent);
 }
 .fc .fc-daygrid-event:hover{
   box-shadow:
     var(--md-elev-2),
-    0 0 0 4px color-mix(in srgb, var(--evt-col, #000) 18%, transparent);
+    0 0 0 2px color-mix(in srgb, var(--evt-col, #000) 18%, transparent);
 }
 
 /* contenuto evento */
 .m-event{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; color: var(--md-sys-color-on-surface) }
 .m-event__title{ display:flex; align-items:center; gap:6px; font-weight:700 }
 .m-event__dot{ width:10px; height:10px; border-radius:999px; background: var(--evt-col, currentColor) }
-.m-event__type{ font-size:.78rem; opacity:.7 }
+.m-event__type{ font-size:.6rem; opacity:.7 }
 
 /* mappa classi → colore */
 .evt-ferie{ --evt-col: var(--evt-ferie); }
 .evt-smart_working{ --evt-col: var(--evt-smart); }
 .evt-permesso_entrata_anticipata{ --evt-col: var(--evt-entrata); }
 .evt-permesso_uscita_anticipata{ --evt-col: var(--evt-uscita); }
+.evt-permesso_studio{ --evt-col: var(--evt-studio); } /* arancione permesso studio */
+.evt-malattia{ --evt-col: var(--evt-malattia); }
 
 /* Malattia */
 .card .fc .evt-malattia{
-  --mal:#b97bff;
   position:relative;
-  background: color-mix(in srgb, var(--mal) 6%, transparent);
-  border:2px solid color-mix(in srgb, var(--mal) 55%, transparent);
+  background: color-mix(in srgb, var(--evt-malattia) 6%, transparent);
+  border:1px solid color-mix(in srgb, var(--evt-malattia) 55%, transparent);
   border-radius:14px; background-clip:padding-box;
   box-shadow: inset 0 6px 14px rgba(0,0,0,.04);
 }
 .card .fc .evt-malattia::after{
   content:""; position:absolute; inset:0; border-radius:14px; pointer-events:none;
   box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--mal) 30%, transparent),
-    0 0 16px 2px color-mix(in srgb, var(--mal) 18%, transparent);
+    0 0 0 2px color-mix(in srgb, var(--evt-malattia) 30%, transparent),
+    0 0 16px 2px color-mix(in srgb, var(--evt-malattia) 18%, transparent);
 }
-.card .fc .evt-malattia .m-event__dot{ background: var(--mal) }
-.card .fc .evt-malattia .m-event__type{ color: color-mix(in srgb, var(--mal) 80%, #222) }
+.card .fc .evt-malattia .m-event__dot{ background: var(--evt-malattia) }
+.card .fc .evt-malattia .m-event__type{ color: color-mix(in srgb, var(--evt-malattia) 80%, #222) }
 
 /* =========
    Utilities
