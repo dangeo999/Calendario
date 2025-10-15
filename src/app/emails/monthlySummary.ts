@@ -5,32 +5,41 @@ type Row = {
   name: string
   ferie_days: number
   malattia_days: number
-  // Questi due campi ora si sommano e si mostrano come "Permessi (ore)"
-  // Se nel DB sono ancora MINUTI, dividili per 60 qui sotto (vedi commento).
   perm_entrata_count: number
   perm_uscita_count: number
+  notes?: string | null
 }
 
-export function renderMonthlySummaryEmail(
-  rows: Row[],
-  year: number,
-  month: number
-) {
-  const mm = String(month).padStart(2,'0')
+function escapeHtml(s: string) {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+// converte \n in <br> e mantiene i pallini “• ”
+function renderNotes(n?: string | null) {
+  if (!n) return ''
+  return escapeHtml(n).replace(/\n/g, '<br>')
+}
+
+export function renderMonthlySummaryEmail(rows: Row[], year: number, month: number) {
+  const mm = String(month).padStart(2, '0')
   const title = `Riepilogo mese ${mm}/${year}`
 
-  const tableRows = rows.map(r => {
-    // Se nel DB i permessi sono ancora in MINUTI, usa:
-    // const permOre = (r.perm_entrata_count + r.perm_uscita_count) / 60
-    // Altrimenti, se sono già in ORE:
-    const permOre = r.perm_entrata_count + r.perm_uscita_count
-
+  const tableRows = (rows ?? []).map(r => {
+    const permOre = Number(r.perm_entrata_count ?? 0) + Number(r.perm_uscita_count ?? 0)
     return `
       <tr>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb">${r.name}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center">${r.ferie_days}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center">${r.malattia_days}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb">${escapeHtml(r.name ?? r.user_id)}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center">${Number(r.ferie_days ?? 0)}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center">${Number(r.malattia_days ?? 0)}</td>
         <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center">${permOre}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:left;max-width:520px;word-wrap:break-word;white-space:pre-wrap">
+          ${renderNotes(r.notes)}
+        </td>
       </tr>
     `
   }).join('')
@@ -47,11 +56,18 @@ export function renderMonthlySummaryEmail(
             <th style="text-align:center;padding:10px;border-bottom:1px solid #e5e7eb">Ferie (gg)</th>
             <th style="text-align:center;padding:10px;border-bottom:1px solid #e5e7eb">Malattia (gg)</th>
             <th style="text-align:center;padding:10px;border-bottom:1px solid #e5e7eb">Permessi (ore)</th>
+            <th style="text-align:left;padding:10px;border-bottom:1px solid #e5e7eb">Note</th>
           </tr>
         </thead>
-        <tbody>${tableRows || `
-          <tr><td colspan="5" style="padding:12px;text-align:center;color:#64748b">Nessun dato per il mese selezionato.</td></tr>
-        `}</tbody>
+        <tbody>
+          ${tableRows || `
+            <tr>
+              <td colspan="5" style="padding:12px;text-align:center;color:#64748b">
+                Nessun dato per il mese selezionato.
+              </td>
+            </tr>
+          `}
+        </tbody>
       </table>
     </div>
   </div>
