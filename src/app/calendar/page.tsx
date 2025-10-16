@@ -546,13 +546,6 @@ const handleSendEmail = async () => {
     await load()
     await loadSummary()
   }
-    const [isTouch, setIsTouch] = useState(false)
-
-    useEffect(() => {
-      if (typeof window !== 'undefined') {
-        setIsTouch(window.matchMedia('(hover: none) and (pointer: coarse)').matches)
-      }
-    }, [])
 
   // ---- UI helpers ----
   const gotoPrev = () => calRef.current?.getApi().prev()
@@ -699,84 +692,62 @@ const handleSendEmail = async () => {
 
           
         <FullCalendar
-            ref={calRef}
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            initialView="dayGridMonth"
-            height="auto"
-            expandRows
-            dayMaxEvents={3}
-            nowIndicator
-
-            /* 👇 SU TOUCH: niente selezione/drag; usa solo dateClick */
-            selectable={!isTouch}                 // CHANGED
-            selectMirror={!isTouch}               // CHANGED
-            select={isTouch ? undefined : onSelect}  // CHANGED
-            dateClick={onDateClick}
-            eventClick={(info: any) => {
-            // su alcuni Android serve anche return false
-            info.jsEvent?.preventDefault?.();
-            info.jsEvent?.stopPropagation?.();
-            onEventClick(info);
-            return false;
+          ref={calRef}
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          initialView="dayGridMonth"
+          height="auto"
+          expandRows
+          dayMaxEvents={3}
+          nowIndicator
+          selectable
+          selectMirror
+          select={onSelect}
+          dateClick={onDateClick}              // 👈 tap singolo su un giorno
+          eventClick={onEventClick}
+          selectLongPressDelay={200}           // 👈 riduce il long-press su iOS/Android
+          eventLongPressDelay={200}
+          selectMinDistance={1}                // 👈 evita dover trascinare “troppo”
+          locale={itLocale}
+          headerToolbar={false}
+          buttonText={{ today: 'oggi', month: 'mese', week: 'settimana', day: 'giorno' }}
+          eventDisplay="block"
+          displayEventTime={true}
+          eventClassNames={(arg) => [`evt-${((arg.event.extendedProps as any).type as DbType).toLowerCase()}`]}
+          events={eventsForCalendar}
+          eventContent={renderEvent}
+          datesSet={(arg) => setViewDate(arg.view.calendar.getDate())}
+          dayCellClassNames={(arg) => {
+            const classes: string[] = [];
+            if (arg.isOther) return classes;
+            const dow = arg.date.getDay(); // 0=dom, 6=sab
+            if (dow === 0 || dow === 6) classes.push('it-weekend');
+            if (dow === 0) classes.push('it-sunday');
+            const iso = ymdLocal(arg.date);
+            const y = arg.date.getFullYear()
+            const map = new Map<string,string>([
+              ...italianHolidaysOf(y - 1),
+              ...italianHolidaysOf(y),
+              ...italianHolidaysOf(y + 1),
+            ])
+            if (map.get(iso)) classes.push('it-holiday');
+            return classes;
           }}
-
-
-            /* Soglie long-press solo quando serve (desktop/tablet con mouse) */
-            selectLongPressDelay={isTouch ? undefined : 200}   // CHANGED
-            eventLongPressDelay={isTouch ? undefined : 200}    // CHANGED
-            selectMinDistance={isTouch ? undefined : 1}        // CHANGED
-
-            /* Disabilita qualsiasi trascinamento su mobile */
-            editable={!isTouch ? false : false}   // esplicito: nessun drag sempre
-            eventStartEditable={false}
-            eventDurationEditable={false}
-            dragScroll={false}
-
-            locale={itLocale}
-            headerToolbar={false}
-            buttonText={{ today: 'oggi', month: 'mese', week: 'settimana', day: 'giorno' }}
-            eventDisplay="block"
-            displayEventTime={true}
-            eventClassNames={(arg) => [
-              `evt-${((arg.event.extendedProps as any).type as DbType).toLowerCase()}`
-            ]}
-            events={eventsForCalendar}
-            eventContent={renderEvent}
-            datesSet={(arg) => setViewDate(arg.view.calendar.getDate())}
-
-            dayCellClassNames={(arg) => {
-              const classes: string[] = []
-              if (arg.isOther) return classes
-              const dow = arg.date.getDay() // 0=dom, 6=sab
-              if (dow === 0 || dow === 6) classes.push('it-weekend')
-              if (dow === 0) classes.push('it-sunday')
-              const iso = ymdLocal(arg.date)
-              const y = arg.date.getFullYear()
-              const map = new Map<string, string>([
-                ...italianHolidaysOf(y - 1),
-                ...italianHolidaysOf(y),
-                ...italianHolidaysOf(y + 1)
-              ])
-              if (map.get(iso)) classes.push('it-holiday')
-              return classes
-            }}
-            dayCellDidMount={(arg) => {
-              if (arg.isOther) return
-              const iso = ymdLocal(arg.date)
-              const y = arg.date.getFullYear()
-              const map = new Map<string, string>([
-                ...italianHolidaysOf(y - 1),
-                ...italianHolidaysOf(y),
-                ...italianHolidaysOf(y + 1)
-              ])
-              const hol = map.get(iso)
-              if (hol) {
-                const numEl = arg.el.querySelector('.fc-daygrid-day-number') as HTMLElement | null
-                if (numEl) numEl.setAttribute('data-holiday', hol)
-              }
-            }}
-          />
-
+          dayCellDidMount={(arg) => {
+            if (arg.isOther) return;
+            const iso = ymdLocal(arg.date);
+            const y = arg.date.getFullYear()
+            const map = new Map<string,string>([
+              ...italianHolidaysOf(y - 1),
+              ...italianHolidaysOf(y),
+              ...italianHolidaysOf(y + 1),
+            ])
+            const hol = map.get(iso);
+            if (hol) {
+              const numEl = arg.el.querySelector('.fc-daygrid-day-number') as HTMLElement | null;
+              if (numEl) numEl.setAttribute('data-holiday', hol);
+            }
+          }}
+        />
         {/* LEGGENDARIO SOTTO IL RIEPILOGO (dentro la card) */}
           <div className="calendar-legend">
             <div className="legend legend--compact legend--sm">
