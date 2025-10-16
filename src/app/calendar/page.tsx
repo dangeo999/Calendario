@@ -173,6 +173,30 @@ export default function CalendarPage() {
   }, [viewDate])
 
   const calRef = useRef<any>(null) // semplice per getApi()
+const [showFiltersMobile, setShowFiltersMobile] = useState(false)
+
+const initialsOf = (full?: string) => {
+  if (!full) return 'U'
+  const parts = String(full).trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 1) return parts[0].slice(0,2).toUpperCase()
+  return (parts[0][0] + (parts[1]?.[0] || '')).toUpperCase()
+}
+
+const openCreateQuick = () => {
+  const day = toDateInput(new Date().toISOString())
+  setDraft({
+    mode:'create',
+    date: day,
+    startDate: day,
+    endDate: day,
+    time: '09:00',
+    durationHours: 1,
+    type: 'SMART_WORKING',
+    note: ''
+  })
+  setOpen(true)
+  setTimeout(() => dlgRef.current?.showModal(), 0)
+}
 
   // ---------- DATA LOAD ----------
   const load = async () => {
@@ -565,8 +589,86 @@ const handleSendEmail = async () => {
       </div>
     )
   }
+{/* ===== MOBILE APPBAR ===== */}
+<div className="mobile-appbar">
+  {/* Menu/filtri */}
+  <button className="mobile-appbar__btn" onClick={()=>setShowFiltersMobile(v=>!v)} aria-label="Filtri">
+    <span className="material-symbols-rounded">menu</span>
+  </button>
+
+  {/* Mese con frecce */}
+  <div className="mobile-month">
+    <button className="mobile-appbar__btn" onClick={gotoPrev} aria-label="Mese precedente">
+      <span className="material-symbols-rounded">chevron_left</span>
+    </button>
+    <div style={{maxWidth:'52vw'}}>
+      {format(viewDate, 'MMMM yyyy', { locale: it })}
+    </div>
+    <div className="mobile-month__chev">
+      <button className="mobile-appbar__btn" onClick={gotoNext} aria-label="Mese successivo">
+        <span className="material-symbols-rounded">chevron_right</span>
+      </button>
+    </div>
+  </div>
+
+  {/* Cerca (placeholder per futuro) */}
+  <button className="mobile-appbar__btn" aria-label="Cerca">
+    <span className="material-symbols-rounded">search</span>
+  </button>
+
+  {/* Oggi */}
+  <button className="mobile-appbar__btn" onClick={gotoToday} aria-label="Oggi">
+    <span className="material-symbols-rounded">calendar_today</span>
+  </button>
+
+  {/* Invia riepilogo */}
+  <button className="mobile-appbar__btn" onClick={handleSendMonthlyEmail} disabled={sendingMail} aria-label="Invia riepilogo">
+    <span className="material-symbols-rounded">{sendingMail ? 'hourglass_top' : 'task_alt'}</span>
+  </button>
+
+  {/* Avatar / login */}
+  <a href="/login" className="mobile-appbar__btn" aria-label="Profilo">
+    <div className="mobile-avatar">
+      {initialsOf(
+        profiles.find(p=>p.id===authUser?.id)?.full_name
+        || authUser?.user_metadata?.full_name
+        || authUser?.user_metadata?.name
+        || (authUser?.email?.split('@')[0])
+      )}
+    </div>
+  </a>
+</div>
+{showFiltersMobile && (
+  <div className="sheet">
+    <div className="sheet__row">
+      <select className="m-field" value={filterUser} onChange={e => setFilterUser(e.target.value)}>
+        <option value="ALL">Tutti gli utenti</option>
+        {profiles.map((p: any) => (
+          <option value={p.id} key={p.id}>{p.full_name || p.id.slice(0, 6)}</option>
+        ))}
+      </select>
+
+      <select
+        className="m-field"
+        value={filterType}
+        onChange={e => setFilterType(e.target.value as 'ALL' | DbType)}
+      >
+        <option value="ALL">Tutti i tipi</option>
+        {(['FERIE','SMART_WORKING','PERMESSO_ENTRATA_ANTICIPATA','PERMESSO_USCITA_ANTICIPATA','MALATTIA','PERMESSO_STUDIO'] as DbType[]).map(t => (
+          <option key={t} value={t}>{labelOfType(t)}</option>
+        ))}
+      </select>
+    </div>
+    <div className="sheet__actions">
+      <button className="m-btn m-btn--filled" onClick={()=>setShowFiltersMobile(false)}>
+        <span className="material-symbols-rounded">check</span> Applica
+      </button>
+    </div>
+  </div>
+)}
 
     return (
+      
     <div className="container">
       
       {/* Top App Bar */}

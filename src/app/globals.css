@@ -519,107 +519,62 @@ dialog::backdrop{
 
 .fc-daygrid-day, .fc-daygrid-day-number { cursor: pointer; }
 
-/* === VISTA MOBILE APP-LIKE === */
-@media (max-width: 640px) {
-  body {
-    background: #f6f8fc;
-  }
+/* ===== MOBILE APP LOOK (<=640px) ===== */
+@media (max-width: 640px){
+  /* Nascondi la vecchia barra su mobile */
+  .appbar{ display:none !important; }
 
-  /* Appbar stile Google Calendar */
-  .appbar {
-    position: sticky;
-    top: 0;
-    border: none;
-    border-radius: 0;
-    box-shadow: 0 2px 6px rgba(0,0,0,.08);
-    background: var(--md-sys-color-primary);
-    color: var(--md-sys-color-on-primary);
-    padding: 10px 14px;
-  }
-  .appbar__logo { color: #fff; font-size: 24px; }
-  .appbar__title { color: #fff; font-weight: 600; font-size: 1.05rem; }
-
-  /* Controlli mese */
-  .segmented {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-  }
-  .segmented__btn {
-    color: #fff;
-    border-radius: 999px;
-    background: rgba(255,255,255,.15);
-    margin: 0 2px;
-  }
-  .segmented__btn:hover { background: rgba(255,255,255,.25); }
-
-  .cal-month-label {
-    background: transparent;
-    color: #fff;
-    font-weight: 700;
-    min-width: auto;
-    padding: 0 6px;
-  }
-
-  /* Filtri: sotto forma di barra “chips” */
-  .appbar__right {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    margin-top: 8px;
-  }
-  .appbar__row--bottom {
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 6px;
-  }
-  .m-field {
-    font-size: 0.85rem;
-    border-radius: 999px;
-    padding: 6px 10px;
-  }
-
-  /* Pulsanti azione tondi */
-  .m-btn--filled, .m-btn--tonal {
-    border-radius: 999px;
-    width: 38px; height: 38px;
-    padding: 0;
+  /* Mobile appbar */
+  .mobile-appbar{
+    position: sticky; top: 0; z-index: 20;
     display: grid;
-    place-items: center;
+    grid-template-columns: auto 1fr auto auto auto auto;
+    align-items: center; gap: 10px;
+    padding: 12px 14px;
+    background: #e9eef8;            /* blu-grigio soft stile Google */
+    border-bottom: 1px solid #d8dfeb;
   }
-  .m-btn--filled span.material-symbols-rounded,
-  .m-btn--tonal span.material-symbols-rounded {
-    font-size: 22px;
+  .mobile-appbar__btn{
+    appearance:none; border:0; background:transparent; color:#1f2a3b;
+    width:36px; height:36px; border-radius:999px; display:grid; place-items:center;
   }
-  .m-btn--filled { background: #fff; color: var(--md-sys-color-primary); }
-  .m-btn--tonal { background: rgba(255,255,255,.2); color: #fff; }
+  .mobile-appbar__btn:active{ background: rgba(0,0,0,.06); }
 
-  /* Riepilogo */
-  .card > .panel__header {
-    background: #fff;
-    border: none;
-    box-shadow: var(--md-elev-1);
-    border-radius: 14px;
-    margin: 0 0 8px 0;
+  .mobile-month{
+    display:flex; align-items:center; gap:6px;
+    font-weight:700; font-size:1.05rem; color:#1f2a3b;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
-  .balance-strip {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    justify-content: flex-end;
+  .mobile-month__chev{
+    display:flex; align-items:center; gap:2px;
+  }
+  .mobile-month__chev .material-symbols-rounded{ font-size:22px; }
+
+  /* Avatar */
+  .mobile-avatar{
+    width:32px; height:32px; border-radius:999px;
+    background:#1a73e8; color:#fff; display:grid; place-items:center;
+    font-weight:700;
   }
 
-  /* Tabella */
-  .m-table th, .m-table td {
-    font-size: 0.8rem;
-    padding: 6px;
+  /* Floating Action Button (+) */
+  .fab{
+    position: fixed; right: 16px; bottom: 18px; z-index: 20;
+    width:56px; height:56px; border-radius:16px;
+    background:#e8edfb; color:#0a2a6a;
+    border:1px solid #cddbff; display:grid; place-items:center;
+    box-shadow: 0 6px 16px rgba(0,0,0,.12);
   }
+  .fab:active{ transform: translateY(1px); }
 
-  /* Legenda compatta */
-  .calendar-legend {
-    justify-content: center;
-    border: none;
-    background: transparent;
-    margin-top: 4px;
+  /* Filter sheet (dropdown semplice) */
+  .sheet{
+    position: fixed; left: 8px; right: 8px; top: 60px; z-index: 30;
+    border-radius: 14px; padding: 10px;
+    background:#fff; border:1px solid #d8dfeb; box-shadow: var(--md-elev-3);
   }
+  .sheet__row{ display:flex; gap:8px; }
+  .sheet .m-field{ flex:1; }
+  .sheet__actions{ display:flex; justify-content:flex-end; margin-top:8px; }
+  .sheet__actions .m-btn{ height:36px; }
 }
