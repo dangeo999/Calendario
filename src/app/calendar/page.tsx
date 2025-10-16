@@ -737,65 +737,60 @@ const [showTableMobile, setShowTableMobile] = useState(false)
 
       <div className="card m-elev-1">
         {/* RIEPILOGO MENSILE */}
-        <div className="card m-elev-1 summary-card" style={{ marginTop: 0, marginBottom: 5 }}>
+        <div className="card m-elev-1 summary-card" style={{ marginTop: 0, marginBottom: 8 }}>
   <div className="panel__header" style={{ position: 'static' }}>
-    <div className="panel__title">
+    <div className="summary-title">
       Riepilogo mese • {format(viewDate, 'MMMM yyyy', { locale: it })}
     </div>
-    {/* KPI personali (già presenti): lascio i tuoi */}
-    {myBalance && (
-      <div className="kpi-row">
-        <span className="kpi">Saldo ferie: <span className="mono">{myBalance.ferie.toFixed(2)}</span><span className="unit">gg</span></span>
-        <span className="kpi">Saldo permessi: <span className="mono">{myBalance.perm.toFixed(2)}</span><span className="unit">h</span></span>
-      </div>
-    )}
   </div>
 
-  {/* KPI totali mese (tutta azienda) */}
-  {monthSummary.length > 0 && (
-    <div className="kpi-row" style={{ marginTop: 6 }}>
-      <span className="kpi"><i className="dot dot--ferie" /> {totals.ferie}<span className="unit"> gg ferie</span></span>
-      <span className="kpi"><i className="dot dot--smart" /> {totals.smart}<span className="unit"> gg smart</span></span>
-      <span className="kpi"><i className="dot dot--malattia" /> {totals.mal}<span className="unit"> gg malattia</span></span>
-      <span className="kpi"><i className="dot dot--entrata" /> {totals.permH}<span className="unit"> h permessi</span></span>
+  {/* Saldi personali compatti */}
+  {myBalance && (
+    <div className="my-balances">
+      <span>Saldi: <b className="mono">{myBalance.ferie.toFixed(2)}</b> gg ferie</span>
+      <span>• <b className="mono">{myBalance.perm.toFixed(2)}</b> h permessi</span>
     </div>
   )}
 
-  {/* LISTA MOBILE COMPATTA */}
+  {/* KPI mese 2x2 */}
+  {monthSummary.length > 0 && (
+    <div className="kpi-grid">
+      <div className="kpi-card"><i className="dot dot--ferie" /><span className="label">Ferie tot.</span><span className="value mono">{totals.ferie}</span></div>
+      <div className="kpi-card"><i className="dot dot--smart" /><span className="label">Smart tot.</span><span className="value mono">{totals.smart}</span></div>
+      <div className="kpi-card"><i className="dot dot--malattia" /><span className="label">Malattia</span><span className="value mono">{totals.mal}</span></div>
+      <div className="kpi-card"><i className="dot dot--entrata" /><span className="label">Permessi (h)</span><span className="value mono">{totals.permH}</span></div>
+    </div>
+  )}
+
+  {/* Elenco utenti snello */}
   {monthSummary.length > 0 && (
     <div className="mobile-summary">
       {monthSummary.map(r => {
         const pills: React.ReactNode[] = []
-        if (r.ferie_days) pills.push(
-          <span key="f" className="mpill mpill--ferie"><i className="dot" />{r.ferie_days} gg</span>
-        )
-        if (r.smart_days) pills.push(
-          <span key="s" className="mpill mpill--smart"><i className="dot" />{r.smart_days} gg</span>
-        )
-        if (r.malattia_days) pills.push(
-          <span key="m" className="mpill mpill--malattia"><i className="dot" />{r.malattia_days} gg</span>
-        )
+        if (r.ferie_days) pills.push(<span key="f" className="pill pill--ferie"><i className="dot" />{r.ferie_days} gg</span>)
+        if (r.smart_days) pills.push(<span key="s" className="pill pill--smart"><i className="dot" />{r.smart_days} gg</span>)
+
+        // mostra UNA sola pill per permessi (somma), e malattia solo se >0
         const permTot = Number(r.perm_entrata_count||0)+Number(r.perm_uscita_count||0)+Number(r.perm_studio_count||0)
-        if (permTot) pills.push(
-          <span key="p" className="mpill mpill--perm"><i className="dot" />{permTot} h</span>
-        )
+        if (permTot) pills.push(<span key="p" className="pill pill--perm"><i className="dot" />{permTot} h</span>)
+        if (r.malattia_days) pills.push(<span key="m" className="pill pill--mal"><i className="dot" />{r.malattia_days} gg</span>)
 
         const initials = r.name?.trim()?.split(/\s+/).map((w:string)=>w[0]).join('').slice(0,2).toUpperCase() || 'U'
 
         return (
           <div className="muser" key={r.user_id}>
-            <div className="muser__left">
-              <div className="muser__ava">{initials}</div>
-              <div className="muser__name">{r.name}</div>
+            <div className="muser__ava">{initials}</div>
+            <div className="muser__name">{r.name}</div>
+            <div className="muser__pills">
+              {pills.length ? pills : <span className="m-field__label">—</span>}
             </div>
-            <div className="mpills">{pills.length ? pills : <span className="m-field__label">—</span>}</div>
           </div>
         )
       })}
     </div>
   )}
 
-  {/* TOGGLE DETTAGLI (mostra la tabella vera) */}
+  {/* Toggle dettagli */}
   {monthSummary.length > 0 && (
     <button type="button" className="summary-toggle" onClick={()=>setShowTableMobile(v=>!v)}>
       <span className="material-symbols-rounded">{showTableMobile ? 'expand_less' : 'expand_more'}</span>
@@ -803,45 +798,18 @@ const [showTableMobile, setShowTableMobile] = useState(false)
     </button>
   )}
 
-  {/* TABELLA (desktop + mobile se aperta) */}
+  {/* Tabella (desktop sempre visibile, mobile solo se aperta) */}
   {monthSummary.length === 0 ? (
     <div className="m-field__label" style={{ padding: '8px 10px' }}>
       Nessun dato nel mese corrente.
     </div>
   ) : (
     <div className={`table-wrap ${showTableMobile ? 'is-open' : ''}`}>
-      <table className="m-table">
-        <thead>
-          <tr>
-            <th>Utente</th>
-            <th>Ferie (gg)</th>
-            <th>Smart (gg)</th>
-            <th>Malattia (gg)</th>
-            <th>Perm. Entrata (h)</th>
-            <th>Perm. Uscita (h)</th>
-            <th>Perm. Studio (h)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {monthSummary.map(r => (
-            <tr key={r.user_id}>
-              <td>{r.name}</td>
-              <td>{r.ferie_days}</td>
-              <td>{r.smart_days}</td>
-              <td>{r.malattia_days}</td>
-              <td>{toHours(r.perm_entrata_count)}</td>
-              <td>{toHours(r.perm_uscita_count)}</td>
-              <td>{toHours(r.perm_studio_count)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* lascia la tua tabella identica qui dentro */}
+      <table className="m-table"> ... </table>
     </div>
   )}
 </div>
-
-      
-
           
         <FullCalendar
           ref={calRef}
