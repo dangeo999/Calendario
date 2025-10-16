@@ -518,3 +518,108 @@ dialog::backdrop{
 }
 
 .fc-daygrid-day, .fc-daygrid-day-number { cursor: pointer; }
+
+/* === VISTA MOBILE APP-LIKE === */
+@media (max-width: 640px) {
+  body {
+    background: #f6f8fc;
+  }
+
+  /* Appbar stile Google Calendar */
+  .appbar {
+    position: sticky;
+    top: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    padding: 10px 14px;
+  }
+  .appbar__logo { color: #fff; font-size: 24px; }
+  .appbar__title { color: #fff; font-weight: 600; font-size: 1.05rem; }
+
+  /* Controlli mese */
+  .segmented {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+  .segmented__btn {
+    color: #fff;
+    border-radius: 999px;
+    background: rgba(255,255,255,.15);
+    margin: 0 2px;
+  }
+  .segmented__btn:hover { background: rgba(255,255,255,.25); }
+
+  .cal-month-label {
+    background: transparent;
+    color: #fff;
+    font-weight: 700;
+    min-width: auto;
+    padding: 0 6px;
+  }
+
+  /* Filtri: sotto forma di barra “chips” */
+  .appbar__right {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-top: 8px;
+  }
+  .appbar__row--bottom {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .m-field {
+    font-size: 0.85rem;
+    border-radius: 999px;
+    padding: 6px 10px;
+  }
+
+  /* Pulsanti azione tondi */
+  .m-btn--filled, .m-btn--tonal {
+    border-radius: 999px;
+    width: 38px; height: 38px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+  }
+  .m-btn--filled span.material-symbols-rounded,
+  .m-btn--tonal span.material-symbols-rounded {
+    font-size: 22px;
+  }
+  .m-btn--filled { background: #fff; color: var(--md-sys-color-primary); }
+  .m-btn--tonal { background: rgba(255,255,255,.2); color: #fff; }
+
+  /* Riepilogo */
+  .card > .panel__header {
+    background: #fff;
+    border: none;
+    box-shadow: var(--md-elev-1);
+    border-radius: 14px;
+    margin: 0 0 8px 0;
+  }
+  .balance-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  /* Tabella */
+  .m-table th, .m-table td {
+    font-size: 0.8rem;
+    padding: 6px;
+  }
+
+  /* Legenda compatta */
+  .calendar-legend {
+    justify-content: center;
+    border: none;
+    background: transparent;
+    margin-top: 4px;
+  }
+}
