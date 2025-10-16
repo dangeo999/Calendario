@@ -306,6 +306,18 @@ const openCreateQuick = () => {
     perm_studio_count: number
   }
   const [monthSummary, setMonthSummary] = useState<MonthlyRow[]>([])
+const totals = useMemo(() => {
+  const acc = { ferie:0, smart:0, mal:0, permH:0 }
+  for (const r of monthSummary) {
+    acc.ferie += Number(r.ferie_days||0)
+    acc.smart += Number(r.smart_days||0)
+    acc.mal   += Number(r.malattia_days||0)
+    acc.permH += Number(r.perm_entrata_count||0)
+                + Number(r.perm_uscita_count||0)
+                + Number(r.perm_studio_count||0)
+  }
+  return acc
+}, [monthSummary])
 
   const loadSummary = React.useCallback(async () => {
     const y = viewDate.getFullYear()
@@ -570,6 +582,7 @@ const handleSendEmail = async () => {
     await load()
     await loadSummary()
   }
+const [showTableMobile, setShowTableMobile] = useState(false)
 
   // ---- UI helpers ----
   const gotoPrev = () => calRef.current?.getApi().prev()
@@ -724,60 +737,109 @@ const handleSendEmail = async () => {
 
       <div className="card m-elev-1">
         {/* RIEPILOGO MENSILE */}
-        <div className="card m-elev-1" style={{ marginTop: 0, marginBottom: 5 }}>
-          <div className="panel__header" style={{ position: 'static', margin: '-8px -8px 8px', borderRadius: '14px 14px 0 0' }}>
-            <div className="panel__title">
-              Riepilogo mese • {format(viewDate, 'MMMM yyyy', { locale: it })}
-            </div>
-            {myBalance && (
-              <div className="balance-strip">
-                <span className="legend__pill legend__pill--stat">
-                  Saldo ferie: <span className="mono">{myBalance.ferie.toFixed(2)}</span>
-                  <span className="unit">gg</span>
-                </span>
-                <span className="legend__pill legend__pill--stat">
-                  Saldo permessi: <span className="mono">{myBalance.perm.toFixed(2)}</span>
-                  <span className="unit">h</span>
-                </span>
-                      </div>
-            )}
-          </div>
+        <div className="card m-elev-1 summary-card" style={{ marginTop: 0, marginBottom: 5 }}>
+  <div className="panel__header" style={{ position: 'static' }}>
+    <div className="panel__title">
+      Riepilogo mese • {format(viewDate, 'MMMM yyyy', { locale: it })}
+    </div>
+    {/* KPI personali (già presenti): lascio i tuoi */}
+    {myBalance && (
+      <div className="kpi-row">
+        <span className="kpi">Saldo ferie: <span className="mono">{myBalance.ferie.toFixed(2)}</span><span className="unit">gg</span></span>
+        <span className="kpi">Saldo permessi: <span className="mono">{myBalance.perm.toFixed(2)}</span><span className="unit">h</span></span>
+      </div>
+    )}
+  </div>
 
-          {monthSummary.length === 0 ? (
-            <div className="m-field__label" style={{ padding: '8px 10px' }}>
-              Nessun dato nel mese corrente.
+  {/* KPI totali mese (tutta azienda) */}
+  {monthSummary.length > 0 && (
+    <div className="kpi-row" style={{ marginTop: 6 }}>
+      <span className="kpi"><i className="dot dot--ferie" /> {totals.ferie}<span className="unit"> gg ferie</span></span>
+      <span className="kpi"><i className="dot dot--smart" /> {totals.smart}<span className="unit"> gg smart</span></span>
+      <span className="kpi"><i className="dot dot--malattia" /> {totals.mal}<span className="unit"> gg malattia</span></span>
+      <span className="kpi"><i className="dot dot--entrata" /> {totals.permH}<span className="unit"> h permessi</span></span>
+    </div>
+  )}
+
+  {/* LISTA MOBILE COMPATTA */}
+  {monthSummary.length > 0 && (
+    <div className="mobile-summary">
+      {monthSummary.map(r => {
+        const pills: React.ReactNode[] = []
+        if (r.ferie_days) pills.push(
+          <span key="f" className="mpill mpill--ferie"><i className="dot" />{r.ferie_days} gg</span>
+        )
+        if (r.smart_days) pills.push(
+          <span key="s" className="mpill mpill--smart"><i className="dot" />{r.smart_days} gg</span>
+        )
+        if (r.malattia_days) pills.push(
+          <span key="m" className="mpill mpill--malattia"><i className="dot" />{r.malattia_days} gg</span>
+        )
+        const permTot = Number(r.perm_entrata_count||0)+Number(r.perm_uscita_count||0)+Number(r.perm_studio_count||0)
+        if (permTot) pills.push(
+          <span key="p" className="mpill mpill--perm"><i className="dot" />{permTot} h</span>
+        )
+
+        const initials = r.name?.trim()?.split(/\s+/).map((w:string)=>w[0]).join('').slice(0,2).toUpperCase() || 'U'
+
+        return (
+          <div className="muser" key={r.user_id}>
+            <div className="muser__left">
+              <div className="muser__ava">{initials}</div>
+              <div className="muser__name">{r.name}</div>
             </div>
-          ) : (
-            <div className="table-wrap">
-              <table className="m-table">
-                <thead>
-                  <tr>
-                    <th>Utente</th>
-                    <th>Ferie (gg)</th>
-                    <th>Smart (gg)</th>
-                    <th>Malattia (gg)</th>
-                    <th>Perm. Entrata (h)</th>
-                    <th>Perm. Uscita (h)</th>
-                    <th>Perm. Studio (h)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {monthSummary.map(r => (
-                    <tr key={r.user_id}>
-                      <td>{r.name}</td>
-                      <td>{r.ferie_days}</td>
-                      <td>{r.smart_days}</td>
-                      <td>{r.malattia_days}</td>
-                      <td>{toHours(r.perm_entrata_count)}</td>
-                      <td>{toHours(r.perm_uscita_count)}</td>
-                      <td>{toHours(r.perm_studio_count)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+            <div className="mpills">{pills.length ? pills : <span className="m-field__label">—</span>}</div>
+          </div>
+        )
+      })}
+    </div>
+  )}
+
+  {/* TOGGLE DETTAGLI (mostra la tabella vera) */}
+  {monthSummary.length > 0 && (
+    <button type="button" className="summary-toggle" onClick={()=>setShowTableMobile(v=>!v)}>
+      <span className="material-symbols-rounded">{showTableMobile ? 'expand_less' : 'expand_more'}</span>
+      {showTableMobile ? 'Nascondi dettagli' : 'Mostra dettagli'}
+    </button>
+  )}
+
+  {/* TABELLA (desktop + mobile se aperta) */}
+  {monthSummary.length === 0 ? (
+    <div className="m-field__label" style={{ padding: '8px 10px' }}>
+      Nessun dato nel mese corrente.
+    </div>
+  ) : (
+    <div className={`table-wrap ${showTableMobile ? 'is-open' : ''}`}>
+      <table className="m-table">
+        <thead>
+          <tr>
+            <th>Utente</th>
+            <th>Ferie (gg)</th>
+            <th>Smart (gg)</th>
+            <th>Malattia (gg)</th>
+            <th>Perm. Entrata (h)</th>
+            <th>Perm. Uscita (h)</th>
+            <th>Perm. Studio (h)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {monthSummary.map(r => (
+            <tr key={r.user_id}>
+              <td>{r.name}</td>
+              <td>{r.ferie_days}</td>
+              <td>{r.smart_days}</td>
+              <td>{r.malattia_days}</td>
+              <td>{toHours(r.perm_entrata_count)}</td>
+              <td>{toHours(r.perm_uscita_count)}</td>
+              <td>{toHours(r.perm_studio_count)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</div>
+
       
 
           

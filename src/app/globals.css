@@ -578,3 +578,67 @@ dialog::backdrop{
   .sheet__actions{ display:flex; justify-content:flex-end; margin-top:8px; }
   .sheet__actions .m-btn{ height:36px; }
 }
+
+/* === Riepilogo mobile app-like === */
+@media (max-width: 640px){
+  /* card più piatta e ariosa */
+  .summary-card{
+    background:#fff;
+    border:1px solid var(--md-sys-color-outline);
+    border-radius:14px;
+    padding:10px;
+    box-shadow: var(--md-elev-1);
+  }
+  .summary-card .panel__header{
+    background:transparent; border:none; box-shadow:none; margin: -4px -4px 6px; padding: 6px 4px;
+  }
+
+  /* KPI totali */
+  .kpi-row{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+  .kpi{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:6px 10px; border-radius:999px;
+    background:#fff; border:1px solid var(--md-sys-color-outline);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.9);
+    font-weight:600; font-size:.9rem;
+  }
+  .kpi .unit{ opacity:.7; margin-left:2px; font-weight:500 }
+
+  /* Lista utenti compatta */
+  .mobile-summary{ display:block; margin-top:8px; }
+  .muser{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px; padding:10px 6px; border-bottom:1px solid color-mix(in srgb, var(--md-sys-color-outline) 60%, transparent);
+  }
+  .muser:last-child{ border-bottom:none }
+  .muser__left{ display:flex; align-items:center; gap:10px; min-width:0 }
+  .muser__ava{
+    width:32px; height:32px; border-radius:999px; display:grid; place-items:center;
+    background:#e8edfb; color:#0a2a6a; font-weight:700; border:1px solid #cddbff;
+  }
+  .muser__name{
+    font-weight:600; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
+  }
+
+  /* pill metriche */
+  .mpills{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end }
+  .mpill{
+    display:inline-flex; align-items:center; gap:6px; padding:4px 8px;
+    border-radius:999px; font-size:.8rem; background:#f6f8fc; border:1px solid var(--md-sys-color-outline);
+  }
+  .mpill .dot{ width:8px; height:8px; border-radius:999px; display:inline-block }
+  .mpill--ferie .dot{ background: var(--evt-ferie) }
+  .mpill--smart .dot{ background: var(--evt-smart) }
+  .mpill--malattia .dot{ background: var(--evt-malattia) }
+  .mpill--perm .dot{ background: var(--evt-entrata) }
+
+  /* toggle dettagli (tabella) */
+  .summary-toggle{
+    display:flex; align-items:center; gap:6px; color:var(--md-sys-color-primary);
+    margin-top:8px; font-weight:600;
+  }
+
+  /* nascondo la tabella su mobile (la mostro solo se utente apre Dettagli) */
+  .table-wrap{ display:none; }
+  .table-wrap.is-open{ display:block; margin-top:8px; }
+}
