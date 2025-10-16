@@ -642,3 +642,10 @@ dialog::backdrop{
   .table-wrap{ display:none; }
   .table-wrap.is-open{ display:block; }
 }
+@media (max-width:640px){
+  .kpi-grid,
+  .summary-toggle,
+  .table-wrap { display:none !important; }  /* niente tabella su mobile */
+  .summary-card{ padding-bottom:8px; }
+  .mobile-summary{ margin-top:6px; }
+}
