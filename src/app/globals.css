@@ -506,7 +506,7 @@ dialog::backdrop{
 .m-table td:nth-child(5),
 .m-table th:nth-child(6),
 .m-table td:nth-child(6){
-  width: 300px;          /* prova 110–130px */
+  width: 130px;          /* prova 110–130px */
   text-align: center;
 }
 
@@ -519,68 +519,39 @@ dialog::backdrop{
 
 .fc-daygrid-day, .fc-daygrid-day-number { cursor: pointer; }
 
-/* ===== MOBILE APP LOOK (<=640px) ===== */
-@media (max-width: 640px){
-  /* Nascondi la vecchia barra su mobile */
-  .appbar{ display:none !important; }
 
-  /* Mobile appbar */
-  .mobile-appbar{
-    position: sticky; top: 0; z-index: 20;
-    display: grid;
-    grid-template-columns: auto 1fr auto auto auto auto;
-    align-items: center; gap: 10px;
-    padding: 12px 14px;
-    background: #e9eef8;            /* blu-grigio soft stile Google */
-    border-bottom: 1px solid #d8dfeb;
-  }
-  .mobile-appbar__btn{
-    appearance:none; border:0; background:transparent; color:#1f2a3b;
-    width:36px; height:36px; border-radius:999px; display:grid; place-items:center;
-  }
-  .mobile-appbar__btn:active{ background: rgba(0,0,0,.06); }
 
-  .mobile-month{
-    display:flex; align-items:center; gap:6px;
-    font-weight:700; font-size:1.05rem; color:#1f2a3b;
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-  }
-  .mobile-month__chev{
-    display:flex; align-items:center; gap:2px;
-  }
-  .mobile-month__chev .material-symbols-rounded{ font-size:22px; }
 
-  /* Avatar */
-  .mobile-avatar{
-    width:32px; height:32px; border-radius:999px;
-    background:#1a73e8; color:#fff; display:grid; place-items:center;
-    font-weight:700;
-  }
-
-  /* Floating Action Button (+) */
-  .fab{
-    position: fixed; right: 16px; bottom: 18px; z-index: 20;
-    width:56px; height:56px; border-radius:16px;
-    background:#e8edfb; color:#0a2a6a;
-    border:1px solid #cddbff; display:grid; place-items:center;
-    box-shadow: 0 6px 16px rgba(0,0,0,.12);
-  }
-  .fab:active{ transform: translateY(1px); }
-
-  /* Filter sheet (dropdown semplice) */
-  .sheet{
-    position: fixed; left: 8px; right: 8px; top: 60px; z-index: 30;
-    border-radius: 14px; padding: 10px;
-    background:#fff; border:1px solid #d8dfeb; box-shadow: var(--md-elev-3);
-  }
-  .sheet__row{ display:flex; gap:8px; }
-  .sheet .m-field{ flex:1; }
-  .sheet__actions{ display:flex; justify-content:flex-end; margin-top:8px; }
-  .sheet__actions .m-btn{ height:36px; }
+@media (max-width:640px){
+  .kpi-grid,
+  .summary-toggle,
+  .table-wrap { display:none !important; }  /* niente tabella su mobile */
+  .summary-card{ padding-bottom:8px; }
+  .mobile-summary{ margin-top:6px; }
+}
+/* ---------- DESKTOP FIRST: nascondi elementi solo-mobile ---------- */
+.mobile-appbar,
+.sheet,
+.fab,
+.my-balances,
+.kpi-grid,
+.mobile-summary,
+.summary-toggle {
+  display: none; /* nascosti di default (desktop) */
 }
 
-/* ===== Summary mobile: versione pulita ===== */
-@media (max-width:640px){
+/* La tabella DEVE essere visibile di default (desktop) */
+.table-wrap { display: block; }
+
+/* ---------- SOLO MOBILE (<=640px) ---------- */
+@media (max-width: 640px){
+
+  /* Mostra la nuova appbar mobile e relativi componenti */
+  .mobile-appbar { display: grid; }
+  .sheet { display: block; }
+  .fab { display: grid; }
+
+  /* Card riepilogo in versione mobile pulita */
   .summary-card{
     background:#fff; border:1px solid var(--md-sys-color-outline);
     border-radius:14px; padding:12px; box-shadow: var(--md-elev-1);
@@ -591,17 +562,16 @@ dialog::backdrop{
   }
   .summary-title{ font-weight:800; letter-spacing:.2px; }
 
-  /* saldi personali compressi */
+  /* Saldi personali compatti (solo mobile) */
   .my-balances{
-    margin-top:4px; color:var(--md-sys-color-on-surface-variant);
-    font-size:.85rem; display:flex; gap:10px; justify-content:flex-start;
+    display:flex; gap:10px; justify-content:flex-start;
+    margin-top:4px; color:var(--md-sys-color-on-surface-variant); font-size:.85rem;
   }
   .my-balances b{ color:var(--md-sys-color-on-surface); font-weight:700 }
 
-  /* KPI del mese in 2x2 */
+  /* KPI mese 2x2 (solo mobile) */
   .kpi-grid{
-    margin-top:10px;
-    display:grid; grid-template-columns:1fr 1fr; gap:8px;
+    display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;
   }
   .kpi-card{
     border:1px solid var(--md-sys-color-outline); border-radius:12px; padding:10px;
@@ -611,8 +581,8 @@ dialog::backdrop{
   .kpi-card .label{ font-size:.82rem; color:var(--md-sys-color-on-surface-variant) }
   .kpi-card .value{ margin-left:auto; font-weight:800 }
 
-  /* lista utenti compatta e aria */
-  .mobile-summary{ margin-top:6px; }
+  /* Lista utenti (solo mobile) */
+  .mobile-summary{ display:block; margin-top:6px; }
   .muser{
     display:flex; align-items:center; gap:10px;
     padding:10px 2px; border-top:1px solid color-mix(in srgb, var(--md-sys-color-outline) 60%, transparent);
@@ -632,20 +602,12 @@ dialog::backdrop{
   .pill--perm  .dot{ background: var(--evt-entrata) }
   .pill--mal   .dot{ background: var(--evt-malattia) }
 
-  /* link dettagli */
+  /* Link dettagli (solo mobile) */
   .summary-toggle{
     display:flex; align-items:center; gap:6px; color:var(--md-sys-color-primary);
     font-weight:700; font-size:.9rem; margin:8px 0 4px; justify-content:flex-end;
   }
 
-  /* Tabella solo se aperta */
-  .table-wrap{ display:none; }
-  .table-wrap.is-open{ display:block; }
-}
-@media (max-width:640px){
-  .kpi-grid,
-  .summary-toggle,
-  .table-wrap { display:none !important; }  /* niente tabella su mobile */
-  .summary-card{ padding-bottom:8px; }
-  .mobile-summary{ margin-top:6px; }
+  /* Su mobile la tabella è nascosta */
+  .table-wrap { display: none !important; }
 }
