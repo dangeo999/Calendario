@@ -410,8 +410,8 @@ dialog::backdrop{
 }
 /* Appbar: righe */
 .appbar__right{ display:flex; flex-direction:column; gap:8px; align-items:stretch; }
-.appbar__row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap }       
-.appbar__spacer{ flex:1 }                          
+.appbar__row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap }
+.appbar__spacer{ flex:1 }
 .appbar__row--top{
   align-items:center;
   min-height:34px;  /* stessa altezza della riga sotto */
@@ -426,7 +426,6 @@ dialog::backdrop{
 .legend--sm .legend__pill{ padding:3px 8px; font-size:12px; line-height:1.1; border-radius:999px; }
 .legend--sm .legend__pill .dot{ width:8px; height:8px; margin-right:6px; }
 .segmented{ height:34px; } .segmented__btn{ height:30px; }
-
 
 @media (max-width:980px){ .appbar__row--bottom{ justify-content:center; } }
 
@@ -450,8 +449,6 @@ dialog::backdrop{
 .m-table tbody tr:hover{
   background: color-mix(in srgb, var(--md-sys-color-primary) 8%, #fff);
 }
-
-
 
 /* Responsive: su schermi stretti allinea tutto a sinistra per non schiacciare */
 @media (max-width: 900px){
@@ -483,7 +480,7 @@ dialog::backdrop{
   flex-wrap:wrap;
 
   /* allineo alla stessa linea della griglia del calendario */
-  padding:3px 2px 0px;    
+  padding:3px 2px 0px;
   border-top:1px solid var(--md-sys-color-outline);
   background: color-mix(in srgb, var(--md-sys-color-surface-1) 98%, transparent);
 }
@@ -519,16 +516,6 @@ dialog::backdrop{
 
 .fc-daygrid-day, .fc-daygrid-day-number { cursor: pointer; }
 
-
-
-
-@media (max-width:640px){
-  .kpi-grid,
-  .summary-toggle,
-  .table-wrap { display:none !important; }  /* niente tabella su mobile */
-  .summary-card{ padding-bottom:8px; }
-  .mobile-summary{ margin-top:6px; }
-}
 /* ---------- DESKTOP FIRST: nascondi elementi solo-mobile ---------- */
 .mobile-appbar,
 .sheet,
@@ -541,7 +528,45 @@ dialog::backdrop{
 }
 
 /* La tabella DEVE essere visibile di default (desktop) */
-.table-wrap { display: block; }
+.table-wrap { display:block !important; }
+.summary-card{ display:block !important; }
+
+/* ======== Stili base per top-bar mobile e sheet (fuori media) ======== */
+.mobile-appbar{
+  position: sticky; top: 0; z-index: 20;
+  display: none; /* mostrata solo sotto 640px */
+  grid-template-columns: auto 1fr auto auto auto;
+  gap: 6px; align-items: center;
+  padding: 8px;
+  background: var(--md-sys-color-surface-1);
+  border-bottom: 1px solid var(--md-sys-color-outline);
+}
+.mobile-appbar__btn{
+  appearance:none; border:1px solid var(--md-sys-color-outline);
+  background:#fff; width:36px; height:36px; border-radius:999px;
+  display:grid; place-items:center; cursor:pointer;
+}
+.mobile-month{
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  font-weight:800; letter-spacing:.2px;
+}
+.mobile-month__chev{ display:flex; gap:6px; }
+
+.mobile-avatar{
+  width:30px; height:30px; border-radius:999px;
+  display:grid; place-items:center; font-weight:800;
+  background:#eef3ff; color:#143b8f; border:1px solid #d6e2ff;
+  font-size:.8rem;
+}
+
+/* Sheet filtri mobile */
+.sheet{
+  display:none; /* mostrata solo sotto 640px */
+  position: sticky; top: 0; z-index: 19;
+  background:#fff; padding:10px; border-bottom:1px solid var(--md-sys-color-outline);
+}
+.sheet__row{ display:flex; gap:8px; }
+.sheet__actions{ display:flex; justify-content:flex-end; margin-top:8px; }
 
 /* ---------- SOLO MOBILE (<=640px) ---------- */
 @media (max-width: 640px){
@@ -550,6 +575,9 @@ dialog::backdrop{
   .mobile-appbar { display: grid; }
   .sheet { display: block; }
   .fab { display: grid; }
+
+  /* Nascondi la appbar desktop su mobile */
+  .appbar{ display:none !important; }
 
   /* Card riepilogo in versione mobile pulita */
   .summary-card{
@@ -608,6 +636,6 @@ dialog::backdrop{
     font-weight:700; font-size:.9rem; margin:8px 0 4px; justify-content:flex-end;
   }
 
-  /* Su mobile la tabella è nascosta */
-  .table-wrap { display: none !important; }
+  /* Niente tabella su mobile */
+  .table-wrap { display:none !important; }
 }
