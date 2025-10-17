@@ -41,7 +41,7 @@ type Draft = {
   durationHours?: number
 }
 
-// helper in cima al file
+// helper
 const PERM_COUNTS_ARE_MINUTES = false
 const toHours = (x: number | null | undefined) =>
   Math.round(((Number(x || 0)) / (PERM_COUNTS_ARE_MINUTES ? 60 : 1)) * 100) / 100
@@ -144,6 +144,15 @@ export default function CalendarPage() {
   const dlgRef = useRef<HTMLDialogElement>(null)
   const [sendingMail, setSendingMail] = useState(false)
 
+  // 👉 NEW: sapere se siamo su mobile per non renderizzare il riepilogo inline
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 640)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
   const handleSendMonthlyEmail = async () => {
     const y = viewDate.getFullYear()
     const m = viewDate.getMonth() + 1
@@ -155,7 +164,6 @@ export default function CalendarPage() {
         body: JSON.stringify({ year: y, month: m }),
         credentials: 'include',
       })
-
       const js = await res.json()
       if (!res.ok) throw new Error(js?.error || 'Invio fallito')
       alert(`Riepilogo ${String(m).padStart(2, '0')}/${y} inviato a: ${js.recipients?.join(', ') || 'nessuno'}`)
@@ -176,11 +184,9 @@ export default function CalendarPage() {
     ])
   }, [viewDate])
 
-  const calRef = useRef<any>(null) // semplice per getApi()
+  const calRef = useRef<any>(null)
   const [showFiltersMobile, setShowFiltersMobile] = useState(false)
   const [showTableMobile, setShowTableMobile] = useState(false)
-
-  // NEW: bottone riepilogo (mobile)
   const [showSummarySheet, setShowSummarySheet] = useState(false)
 
   const initialsOf = (full?: string) => {
@@ -218,7 +224,6 @@ export default function CalendarPage() {
 
     let profs = profs0 || []
 
-    // assicura che il profilo dell’utente esista e abbia un nome
     if (user) {
       const mine = profs.find(p => p.id === user.id)
       if (!mine || !mine.full_name) {
@@ -255,7 +260,6 @@ export default function CalendarPage() {
         ? (authUser?.user_metadata?.full_name || authUser?.user_metadata?.name || authUser?.email || 'Tu')
         : 'Utente')
 
-    // Se vista mobile, mostra solo iniziali
     if (typeof window !== 'undefined' && window.innerWidth < 900 && full) {
       const parts = String(full).trim().split(/\s+/).filter(Boolean)
       if (parts.length === 1) {
@@ -269,7 +273,7 @@ export default function CalendarPage() {
     return full
   }
 
-  // ---------- FILTERED EVENTS (per il calendario) ----------
+  // ---------- FILTERED EVENTS ----------
   const filtered = useMemo(
     () =>
       events.filter(
@@ -557,7 +561,6 @@ export default function CalendarPage() {
         body: JSON.stringify({ year: y, month: m }),
         credentials: 'include',
       })
-
       const js = await res.json()
       if (!res.ok) throw new Error(js?.error || 'Invio fallito')
       alert(`Riepilogo ${String(m).padStart(2, '0')}/${y} inviato a: ${js.recipients?.join(', ') || 'nessuno'}`)
@@ -597,7 +600,7 @@ export default function CalendarPage() {
     )
   }
 
-  // --- RIEPILOGO: estratto in funzione per riuso (desktop + sheet mobile) ---
+  // --- RIEPILOGO (riuso desktop + sheet mobile) ---
   const renderSummary = () => (
     <div className="card m-elev-1 summary-card" style={{ marginTop: 0, marginBottom: 8 }}>
       <div className="panel__header" style={{ position: 'static' }}>
@@ -606,7 +609,6 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* Saldi personali compatti */}
       {myBalance && (
         <div className="my-balances">
           <span>Saldi: <b className="mono">{myBalance.ferie.toFixed(2)}</b> gg ferie</span>
@@ -614,7 +616,6 @@ export default function CalendarPage() {
         </div>
       )}
 
-      {/* KPI mese 2x2 */}
       {monthSummary.length > 0 && (
         <div className="kpi-grid">
           <div className="kpi-card"><i className="dot dot--ferie" /><span className="label">Ferie tot.</span><span className="value mono">{totals.ferie}</span></div>
@@ -624,7 +625,6 @@ export default function CalendarPage() {
         </div>
       )}
 
-      {/* Elenco utenti snello */}
       {monthSummary.length > 0 && (
         <div className="mobile-summary">
           {monthSummary.map(r => {
@@ -648,7 +648,6 @@ export default function CalendarPage() {
         </div>
       )}
 
-      {/* Toggle dettagli */}
       {monthSummary.length > 0 && (
         <button type="button" className="summary-toggle" onClick={() => setShowTableMobile(v => !v)}>
           <span className="material-symbols-rounded">{showTableMobile ? 'expand_less' : 'expand_more'}</span>
@@ -656,14 +655,12 @@ export default function CalendarPage() {
         </button>
       )}
 
-      {/* Tabella (desktop sempre visibile, mobile solo se aperta) */}
       {monthSummary.length === 0 ? (
         <div className="m-field__label" style={{ padding: '8px 10px' }}>
           Nessun dato nel mese corrente.
         </div>
       ) : (
         <div className={`table-wrap ${showTableMobile ? 'is-open' : ''}`}>
-          {/* lascia la tua tabella identica qui dentro */}
           <table className="m-table"> ... </table>
         </div>
       )}
@@ -696,7 +693,7 @@ export default function CalendarPage() {
           <span className="material-symbols-rounded">calendar_today</span>
         </button>
 
-        {/* Nuovo: bottone per aprire il RIEPILOGO su mobile */}
+        {/* Bottone riepilogo (apre sheet) */}
         <button
           className="mobile-appbar__btn"
           onClick={() => setShowSummarySheet(true)}
@@ -748,26 +745,21 @@ export default function CalendarPage() {
       )}
 
       <div className="container">
-        {/* Top App Bar */}
+        {/* Top App Bar (desktop) */}
         <div className="appbar appbar--grid m-elev-2">
-          {/* Riga 1 sinistra: Titolo */}
           <div className="appbar__title-wrap">
             <span className="material-symbols-rounded appbar__logo">calendar_month</span>
             <div className="appbar__title">Calendario condiviso</div>
           </div>
-
-          {/* Colonna destra: controlli */}
           <div className="appbar__right">
             <div className="appbar__row appbar__row--bottom">
               <div className="segmented">
                 <button className="segmented__btn" onClick={gotoPrev}>
                   <span className="material-symbols-rounded">chevron_left</span>
                 </button>
-
                 <div className="cal-month-label">
                   {format(viewDate, 'MMMM yyyy', { locale: it })}
                 </div>
-
                 <button className="segmented__btn" onClick={gotoToday}>oggi</button>
                 <button className="segmented__btn" onClick={gotoNext}>
                   <span className="material-symbols-rounded">chevron_right</span>
@@ -812,8 +804,8 @@ export default function CalendarPage() {
         </div>
 
         <div className="card m-elev-1">
-          {/* RIEPILOGO MENSILE (inline su desktop) */}
-          {renderSummary()}
+          {/* RIEPILOGO INLINE (solo desktop) */}
+          {!isMobile && renderSummary()}
 
           <FullCalendar
             ref={calRef}
@@ -843,7 +835,7 @@ export default function CalendarPage() {
             dayCellClassNames={(arg) => {
               const classes: string[] = []
               if (arg.isOther) return classes
-              const dow = arg.date.getDay() // 0=dom, 6=sab
+              const dow = arg.date.getDay()
               if (dow === 0 || dow === 6) classes.push('it-weekend')
               if (dow === 0) classes.push('it-sunday')
               const iso = ymdLocal(arg.date)
@@ -873,7 +865,7 @@ export default function CalendarPage() {
             }}
           />
 
-          {/* LEGGENDARIO SOTTO IL RIEPILOGO (dentro la card) */}
+          {/* LEGENDA */}
           <div className="calendar-legend">
             <div className="legend legend--compact legend--sm">
               <span className="legend__pill"><i className="dot dot--ferie" />Ferie</span>
@@ -896,7 +888,6 @@ export default function CalendarPage() {
                 </button>
               </div>
 
-              {/* Riepilogo */}
               <div className="summary">
                 <span className="material-symbols-rounded">event</span>
                 <span>
@@ -909,7 +900,6 @@ export default function CalendarPage() {
                 </span>
               </div>
 
-              {/* Campi */}
               {isPermesso(draft?.type ?? 'FERIE') ? (
                 <>
                   <div className="row">
@@ -973,7 +963,6 @@ export default function CalendarPage() {
                 </>
               )}
 
-              {/* Tipo a chip con icone */}
               <div className="block">
                 <label className="m-field__label">Tipo</label>
                 <div className="chip-group">
@@ -998,7 +987,6 @@ export default function CalendarPage() {
                 </div>
               </div>
 
-              {/* Note */}
               <div className="block">
                 <label className="m-field__label">Note</label>
                 <textarea
@@ -1010,7 +998,6 @@ export default function CalendarPage() {
                 />
               </div>
 
-              {/* Azioni */}
               <div className="panel__actions">
                 <button className="m-btn m-btn--text" onClick={() => dlgRef.current?.close()}>Annulla</button>
 
