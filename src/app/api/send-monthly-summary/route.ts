@@ -57,8 +57,16 @@ export async function POST(req: Request) {
         error: err?.message,
         code: err?.code,
         response: err?.response,
+        debug: {
+          host: process.env.SMTP_HOST,
+          port: process.env.SMTP_PORT,
+          secure: process.env.SMTP_SECURE,
+          user: process.env.SMTP_USER,
+          from: process.env.MAIL_FROM,
+        },
       },
       { status: 500 }
     )
   }
+
 }
