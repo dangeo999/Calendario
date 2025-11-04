@@ -502,7 +502,9 @@ dialog::backdrop{
 .m-table th:nth-child(5),
 .m-table td:nth-child(5),
 .m-table th:nth-child(6),
-.m-table td:nth-child(6){
+.m-table td:nth-child(6)
+.m-table th:nth-child(7),
+.m-table td:nth-child(7){
   width: 130px;          /* prova 110–130px */
   text-align: center;
 }
