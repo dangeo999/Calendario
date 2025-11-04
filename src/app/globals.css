@@ -639,3 +639,9 @@ dialog::backdrop{
   /* Niente tabella su mobile */
   .table-wrap { display:none !important; }
 }
+
+.fc .evt--prev-month,
+.fc .evt--next-month {
+  opacity: 0.35;
+  filter: grayscale(0.4);
+}

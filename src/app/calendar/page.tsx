@@ -842,7 +842,27 @@ export default function CalendarPage() {
             buttonText={{ today: 'oggi', month: 'mese', week: 'settimana', day: 'giorno' }}
             eventDisplay="block"
             displayEventTime={true}
-            eventClassNames={(arg) => [`evt-${((arg.event.extendedProps as any).type as DbType).toLowerCase()}`]}
+            eventClassNames={(arg) => {
+              const classes = [
+                `evt-${((arg.event.extendedProps as any).type as DbType).toLowerCase()}`
+              ]
+
+              const start = arg.event.start
+              if (start) {
+                const evYM  = start.getFullYear() * 12 + start.getMonth()
+                const curYM = viewDate.getFullYear() * 12 + viewDate.getMonth()
+                const prevYM = curYM - 1
+                const nextYM = curYM + 1
+
+                if (evYM === prevYM) {
+                  classes.push('evt--prev-month')
+                } else if (evYM === nextYM) {
+                  classes.push('evt--next-month')
+                }
+              }
+
+              return classes
+            }}
             events={eventsForCalendar}
             eventContent={renderEvent}
             datesSet={(arg) => setViewDate(arg.view.calendar.getDate())}
@@ -1055,11 +1075,6 @@ export default function CalendarPage() {
           </dialog>
         )}
       </div>
-
-      {/* FAB per nuovo evento (mobile) */}
-      <button className="fab" onClick={openCreateQuick} aria-label="Nuovo evento">
-        <span className="material-symbols-rounded">add</span>
-      </button>
     </>
   )
 }
