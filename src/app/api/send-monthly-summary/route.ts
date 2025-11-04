@@ -19,7 +19,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: 'Nessun dato da inviare' }, { status: 400 })
     }
 
-    const toEmail = 'f.mazzocchi@geoconsultinformatica.it'
+    const toEmail = process.env.MAIL_TO
+    if (!toEmail) {
+      return NextResponse.json({ ok: false, error: 'Variabile MAIL_TO mancante' }, { status: 500 })
+    }
 
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST!,
