@@ -9,7 +9,7 @@ import { renderMonthlySummaryEmail } from '@/app/emails/monthlySummary'
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { year, month, rows } = body
+    const { year, month, rows, events } = body
 
     if (!year || !month) {
       return NextResponse.json({ ok: false, error: 'Anno o mese mancanti' }, { status: 400 })
@@ -33,8 +33,8 @@ export async function POST(req: Request) {
 
     await transporter.verify()
 
-    // ✅ Genera il riepilogo HTML con i dati effettivi
-    const html = renderMonthlySummaryEmail(rows, year, month)
+    // ✅ passa anche gli eventi
+    const html = renderMonthlySummaryEmail(rows, year, month, events || [])
     const subject = `Riepilogo mese ${String(month).padStart(2, '0')}/${year}`
 
     await transporter.sendMail({

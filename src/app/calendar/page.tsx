@@ -555,36 +555,37 @@ export default function CalendarPage() {
   }
 
   // --- INVIO RIEPILOGO MENSILE ---
-  const handleSendMonthlyEmail = async () => {
-    const y = viewDate.getFullYear()
-    const m = viewDate.getMonth() + 1
-    try {
-      setSendingMail(true)
+const handleSendMonthlyEmail = async () => {
+  const y = viewDate.getFullYear()
+  const m = viewDate.getMonth() + 1
+  try {
+    setSendingMail(true)
 
-      const res = await fetch('/api/send-monthly-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          year: y,
-          month: m,
-          rows: monthSummary, // dati effettivi del riepilogo
-        }),
-        credentials: 'include',
-      })
+    const res = await fetch('/api/send-monthly-summary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        year: y,
+        month: m,
+        rows: monthSummary,
+        events, // 👈 aggiunto: elenco eventi grezzi del mese
+      }),
+      credentials: 'include',
+    })
 
-      const js = await res.json()
-      if (!res.ok || !js.ok) throw new Error(js?.error || 'Invio fallito')
-      alert(
-        `Riepilogo ${String(m).padStart(2, '0')}/${y} inviato (${js.rows} righe) a: ${
-          js.sent_to || js.recipients?.join(', ') || 'destinatario configurato'
-        }`
-      )
-    } catch (err: any) {
-      alert(`Errore invio: ${String(err?.message || err)}`)
-    } finally {
-      setSendingMail(false)
-    }
+    const js = await res.json()
+    if (!res.ok || !js.ok) throw new Error(js?.error || 'Invio fallito')
+    alert(
+      `Riepilogo ${String(m).padStart(2, '0')}/${y} inviato (${js.rows} righe) a: ${
+        js.sent_to || js.recipients?.join(', ') || 'destinatario configurato'
+      }`
+    )
+  } catch (err: any) {
+    alert(`Errore invio: ${String(err?.message || err)}`)
+  } finally {
+    setSendingMail(false)
   }
+}
 
   // --- RIEPILOGO (riuso desktop + sheet mobile) ---
   const renderSummary = () => (
