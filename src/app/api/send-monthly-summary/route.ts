@@ -4,51 +4,56 @@ export const dynamic = 'force-dynamic'
 
 import { NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
-
-// ▼ opzionale: semplice secret per proteggere l'endpoint
-const REQUIRE_SECRET = false
+import { renderMonthlySummaryEmail } from '@/app/emails/monthlySummary'
 
 export async function POST(req: Request) {
   try {
-    const toEmail = process.env.REPORT_RECIPIENT ?? 'd.neroni@geoconsultinformatica.it'
+    const body = await req.json()
+    const { year, month, rows } = body
+
+    if (!year || !month) {
+      return NextResponse.json({ ok: false, error: 'Anno o mese mancanti' }, { status: 400 })
+    }
+
+    if (!rows || !Array.isArray(rows) || rows.length === 0) {
+      return NextResponse.json({ ok: false, error: 'Nessun dato da inviare' }, { status: 400 })
+    }
+
+    const toEmail = 'f.mazzocchi@geoconsultinformatica.it'
 
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST!,
       port: Number(process.env.SMTP_PORT ?? 587),
-      secure: String(process.env.SMTP_SECURE ?? 'false') === 'true', // 465 -> true, 587 -> false
+      secure: String(process.env.SMTP_SECURE ?? 'false') === 'true',
       auth: { user: process.env.SMTP_USER!, pass: process.env.SMTP_PASS! },
     })
 
-    // Verifica connessione/credenziali
     await transporter.verify()
 
-    const now = new Date()
+    // ✅ Genera il riepilogo HTML con i dati effettivi
+    const html = renderMonthlySummaryEmail(rows, year, month)
+    const subject = `Riepilogo mese ${String(month).padStart(2, '0')}/${year}`
+
     await transporter.sendMail({
-      from: process.env.MAIL_FROM ?? process.env.SMTP_USER, // deve spesso coincidere con SMTP_USER
+      from: process.env.MAIL_FROM ?? process.env.SMTP_USER,
       to: toEmail,
-      subject: `Riepilogo ${now.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`,
-      html: `<p>Test invio senza lookup.<br>${now.toISOString()}</p>`,
+      subject,
+      html,
     })
 
-    return NextResponse.json({ ok: true, sent_to: toEmail })
+    return NextResponse.json({
+      ok: true,
+      sent_to: toEmail,
+      rows: rows.length,
+    })
   } catch (err: any) {
-     console.error('SMTP error:', err);
+    console.error('SMTP error:', err)
     return NextResponse.json(
       {
-        error: 'send-failed',
-        message: err?.message,
+        ok: false,
+        error: err?.message,
         code: err?.code,
-        command: err?.command,
         response: err?.response,
-        responseCode: err?.responseCode,
-        // utile per sanity check (senza password)
-        debug: {
-          host: process.env.SMTP_HOST,
-          port: process.env.SMTP_PORT,
-          secure: process.env.SMTP_SECURE,
-          user: process.env.SMTP_USER,
-          from: process.env.MAIL_FROM ?? process.env.SMTP_USER,
-        },
       },
       { status: 500 }
     )

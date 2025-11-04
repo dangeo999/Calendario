@@ -7,6 +7,7 @@ type Row = {
   malattia_days: number
   perm_entrata_count: number
   perm_uscita_count: number
+  perm_studio_count: number
   notes?: string | null
 }
 
@@ -37,6 +38,7 @@ export function renderMonthlySummaryEmail(rows: Row[], year: number, month: numb
         <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center">${Number(r.ferie_days ?? 0)}</td>
         <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center">${Number(r.malattia_days ?? 0)}</td>
         <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center">${permOre}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:center">${Number(r.perm_studio_count ?? 0)}</td>
         <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:left;max-width:520px;word-wrap:break-word;white-space:pre-wrap">
           ${renderNotes(r.notes)}
         </td>
@@ -56,13 +58,14 @@ export function renderMonthlySummaryEmail(rows: Row[], year: number, month: numb
             <th style="text-align:center;padding:10px;border-bottom:1px solid #e5e7eb">Ferie (gg)</th>
             <th style="text-align:center;padding:10px;border-bottom:1px solid #e5e7eb">Malattia (gg)</th>
             <th style="text-align:center;padding:10px;border-bottom:1px solid #e5e7eb">Permessi (ore)</th>
+            <th style="text-align:center;padding:10px;border-bottom:1px solid #e5e7eb">Permessi Studio (ore)</th>
             <th style="text-align:left;padding:10px;border-bottom:1px solid #e5e7eb">Note</th>
           </tr>
         </thead>
         <tbody>
           ${tableRows || `
             <tr>
-              <td colspan="5" style="padding:12px;text-align:center;color:#64748b">
+              <td colspan="6" style="padding:12px;text-align:center;color:#64748b">
                 Nessun dato per il mese selezionato.
               </td>
             </tr>

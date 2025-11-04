@@ -129,6 +129,7 @@ const italianHolidaysOf = (year: number) => {
   return map
 }
 
+// ---------- COMPONENTE PRINCIPALE ----------
 export default function CalendarPage() {
   const [events, setEvents] = useState<any[]>([])
   const [profiles, setProfiles] = useState<any[]>([])
@@ -144,50 +145,21 @@ export default function CalendarPage() {
   const dlgRef = useRef<HTMLDialogElement>(null)
   const [sendingMail, setSendingMail] = useState(false)
 
-  // 👉 NEW: sapere se siamo su mobile per non renderizzare il riepilogo inline
+  const calRef = useRef<any>(null)
+  const [showFiltersMobile, setShowFiltersMobile] = useState(false)
+  const [showTableMobile, setShowTableMobile] = useState(false)
+  const [showSummarySheet, setShowSummarySheet] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const check = () => setIsMobile(window.innerWidth <= 640)
     check()
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  const handleSendMonthlyEmail = async () => {
-    const y = viewDate.getFullYear()
-    const m = viewDate.getMonth() + 1
-    try {
-      setSendingMail(true)
-      const res = await fetch('/api/send-monthly-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ year: y, month: m }),
-        credentials: 'include',
-      })
-      const js = await res.json()
-      if (!res.ok) throw new Error(js?.error || 'Invio fallito')
-      alert(`Riepilogo ${String(m).padStart(2, '0')}/${y} inviato a: ${js.recipients?.join(', ') || 'nessuno'}`)
-    } catch (err: any) {
-      alert(`Errore invio: ${String(err?.message || err)}`)
-    } finally {
-      setSendingMail(false)
-    }
-  }
-
-  // Festività nazionali per l'anno in vista (±1)
-  const holidays = useMemo(() => {
-    const y = viewDate.getFullYear()
-    return new Map<string, string>([
-      ...italianHolidaysOf(y - 1),
-      ...italianHolidaysOf(y),
-      ...italianHolidaysOf(y + 1),
-    ])
-  }, [viewDate])
-
-  const calRef = useRef<any>(null)
-  const [showFiltersMobile, setShowFiltersMobile] = useState(false)
-  const [showTableMobile, setShowTableMobile] = useState(false)
-  const [showSummarySheet, setShowSummarySheet] = useState(false)
 
   const initialsOf = (full?: string) => {
     if (!full) return 'U'
@@ -215,7 +187,7 @@ export default function CalendarPage() {
   // ---------- DATA LOAD ----------
   const load = async () => {
     const { data: evs } = await supabase.from('events').select('*')
-    const { data: profs0 } = await supabase.from('profiles').select('id, full_name, is_admin')
+    const { data: profs0 } = await supabase.from('profiles').select('id, full_name, is_admin, email')
     const { data: { user } } = await supabase.auth.getUser()
 
     setEvents(evs || [])
@@ -239,7 +211,7 @@ export default function CalendarPage() {
           email: user.email ?? null,
         })
 
-        const { data: profs1 } = await supabase.from('profiles').select('id, full_name, is_admin')
+        const { data: profs1 } = await supabase.from('profiles').select('id, full_name, is_admin, email')
         profs = profs1 || profs
       }
     }
@@ -551,24 +523,6 @@ export default function CalendarPage() {
     await loadSummary()
   }
 
-  const handleSendEmail = async () => {
-    const y = viewDate.getFullYear()
-    const m = viewDate.getMonth() + 1
-    try {
-      const res = await fetch('/api/send-monthly-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ year: y, month: m }),
-        credentials: 'include',
-      })
-      const js = await res.json()
-      if (!res.ok) throw new Error(js?.error || 'Invio fallito')
-      alert(`Riepilogo ${String(m).padStart(2, '0')}/${y} inviato a: ${js.recipients?.join(', ') || 'nessuno'}`)
-    } catch (err: any) {
-      alert(`Errore invio: ${String(err?.message || err)}`)
-    }
-  }
-
   const onDelete = async () => {
     if (!draft?.id) return
     const { error } = await supabase.from('events').delete().eq('id', draft.id)
@@ -598,6 +552,38 @@ export default function CalendarPage() {
         {/*<div className="m-event__type">{labelOfType(typeDb)}</div>*/}
       </div>
     )
+  }
+
+  // --- INVIO RIEPILOGO MENSILE ---
+  const handleSendMonthlyEmail = async () => {
+    const y = viewDate.getFullYear()
+    const m = viewDate.getMonth() + 1
+    try {
+      setSendingMail(true)
+
+      const res = await fetch('/api/send-monthly-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          year: y,
+          month: m,
+          rows: monthSummary, // dati effettivi del riepilogo
+        }),
+        credentials: 'include',
+      })
+
+      const js = await res.json()
+      if (!res.ok || !js.ok) throw new Error(js?.error || 'Invio fallito')
+      alert(
+        `Riepilogo ${String(m).padStart(2, '0')}/${y} inviato (${js.rows} righe) a: ${
+          js.sent_to || js.recipients?.join(', ') || 'destinatario configurato'
+        }`
+      )
+    } catch (err: any) {
+      alert(`Errore invio: ${String(err?.message || err)}`)
+    } finally {
+      setSendingMail(false)
+    }
   }
 
   // --- RIEPILOGO (riuso desktop + sheet mobile) ---
@@ -661,7 +647,32 @@ export default function CalendarPage() {
         </div>
       ) : (
         <div className={`table-wrap ${showTableMobile ? 'is-open' : ''}`}>
-          <table className="m-table"> ... </table>
+          <table className="m-table">
+            <thead>
+              <tr>
+                <th>Utente</th>
+                <th>Ferie (gg)</th>
+                <th>Smart (gg)</th>
+                <th>Malattia (gg)</th>
+                <th>Perm. entrata (h)</th>
+                <th>Perm. uscita (h)</th>
+                <th>Perm. studio (h)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {monthSummary.map(r => (
+                <tr key={r.user_id}>
+                  <td>{r.name}</td>
+                  <td className="mono">{r.ferie_days}</td>
+                  <td className="mono">{r.smart_days}</td>
+                  <td className="mono">{r.malattia_days}</td>
+                  <td className="mono">{r.perm_entrata_count}</td>
+                  <td className="mono">{r.perm_uscita_count}</td>
+                  <td className="mono">{r.perm_studio_count}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
@@ -696,12 +707,15 @@ export default function CalendarPage() {
         {/* Bottone riepilogo (apre sheet) */}
         <button
           className="mobile-appbar__btn"
-          onClick={() => setShowSummarySheet(true)}
+          onClick={() => setShowSummarySheet(v => !v)}
           aria-label="Riepilogo mese"
           title="Riepilogo mese"
         >
-          <span className="material-symbols-rounded">insights</span>
+          <span className="material-symbols-rounded">
+            {showSummarySheet ? 'expand_less' : 'insights'}
+          </span>
         </button>
+
 
         <button className="mobile-appbar__btn" onClick={handleSendMonthlyEmail} disabled={sendingMail} aria-label="Invia riepilogo">
           <span className="material-symbols-rounded">{sendingMail ? 'hourglass_top' : 'task_alt'}</span>
@@ -804,8 +818,8 @@ export default function CalendarPage() {
         </div>
 
         <div className="card m-elev-1">
-          {/* RIEPILOGO INLINE (solo desktop) */}
-          {!isMobile && renderSummary()}
+          {/* RIEPILOGO INLINE (desktop + mobile) */}
+          {(!isMobile || showSummarySheet) && renderSummary()}
 
           <FullCalendar
             ref={calRef}
@@ -883,6 +897,9 @@ export default function CalendarPage() {
           <dialog ref={dlgRef} className="modal" onClose={() => { setOpen(false); setDraft(null) }}>
             <div className="panel m-elev-3">
               <div className="panel__header">
+                <div className="panel__title">
+                  {draft?.mode === 'create' ? 'Nuovo evento' : 'Modifica evento'}
+                </div>
                 <button className="panel__close" onClick={() => dlgRef.current?.close()} aria-label="Chiudi">
                   <span className="material-symbols-rounded">close</span>
                 </button>
@@ -967,21 +984,28 @@ export default function CalendarPage() {
                 <label className="m-field__label">Tipo</label>
                 <div className="chip-group">
                   {([
-                    { val: 'FERIE', label: 'Ferie', icon: 'beach_access' },
-                    { val: 'SMART_WORKING', label: 'Smart working', icon: 'home_work' },
-                    { val: 'PERMESSO_ENTRATA', label: 'Permesso entrata', icon: 'login' },
-                    { val: 'PERMESSO_USCITA', label: 'Permesso uscita', icon: 'logout' },
-                    { val: 'MALATTIA', label: 'Malattia', icon: 'sick' },
-                    { val: 'PERMESSO_STUDIO', label: 'Permesso studio', icon: 'school' },
-                  ] as { val: UiType, label: string, icon: string }[]).map(opt => (
+                    'FERIE',
+                    'SMART_WORKING',
+                    'PERMESSO_ENTRATA',
+                    'PERMESSO_USCITA',
+                    'MALATTIA',
+                    'PERMESSO_STUDIO',
+                  ] as UiType[]).map(t => (
                     <button
-                      key={opt.val}
+                      key={t}
                       type="button"
-                      className={`chip ${draft?.type === opt.val ? 'chip--selected' : ''}`}
-                      onClick={() => setDraft(v => v ? ({ ...v, type: opt.val }) : v)}
+                      className={`chip ${draft?.type === t ? 'chip--selected' : ''}`}
+                      onClick={() => setDraft(v => v ? ({ ...v, type: t }) : v)}
                     >
-                      <span className="material-symbols-rounded">{opt.icon}</span>
-                      {opt.label}
+                      <span className="material-symbols-rounded">
+                        {t === 'FERIE' ? 'beach_access'
+                          : t === 'SMART_WORKING' ? 'home_work'
+                          : t === 'PERMESSO_ENTRATA' ? 'login'
+                          : t === 'PERMESSO_USCITA' ? 'logout'
+                          : t === 'MALATTIA' ? 'sick'
+                          : 'school'}
+                      </span>
+                      {t.replace('_', ' ')}
                     </button>
                   ))}
                 </div>
@@ -991,46 +1015,51 @@ export default function CalendarPage() {
                 <label className="m-field__label">Note</label>
                 <textarea
                   className="m-field textarea"
-                  rows={3}
-                  placeholder="Facoltative"
                   value={draft?.note || ''}
                   onChange={e => setDraft(v => v ? ({ ...v, note: e.target.value }) : v)}
                 />
               </div>
 
               <div className="panel__actions">
-                <button className="m-btn m-btn--text" onClick={() => dlgRef.current?.close()}>Annulla</button>
-
-                {draft?.mode === 'edit' ? (
-                  <>
-                    <button className="m-btn m-btn--danger" onClick={onDelete}>Elimina</button>
-                    <button className="m-btn m-btn--filled" onClick={onUpdate}>Salva modifiche</button>
-                  </>
-                ) : (
-                  <button className="m-btn m-btn--filled" onClick={onCreate}>Salva</button>
+                {draft?.mode === 'edit' && (
+                  <button
+                    type="button"
+                    className="m-btn m-btn--danger"
+                    onClick={onDelete}
+                  >
+                    <span className="material-symbols-rounded">delete</span>
+                    Elimina
+                  </button>
                 )}
-              </div>
-            </div>
-          </dialog>
-        )}
-
-        {/* SHEET riepilogo mobile */}
-        {showSummarySheet && (
-          <dialog className="modal" open onClose={() => setShowSummarySheet(false)}>
-            <div className="panel m-elev-3" style={{ width: 'min(520px, 92vw)' }}>
-              <div className="panel__header">
-                <div className="panel__title">Riepilogo mese</div>
-                <button className="panel__close" onClick={() => setShowSummarySheet(false)}>
-                  <span className="material-symbols-rounded">close</span>
+                <button
+                  type="button"
+                  className="m-btn"
+                  onClick={() => {
+                    dlgRef.current?.close()
+                    setOpen(false)
+                    setDraft(null)
+                  }}
+                >
+                  Annulla
                 </button>
-              </div>
-              <div className="summary-sheet">
-                {renderSummary()}
+                <button
+                  type="button"
+                  className="m-btn m-btn--filled"
+                  onClick={draft?.mode === 'edit' ? onUpdate : onCreate}
+                >
+                  <span className="material-symbols-rounded">check</span>
+                  Salva
+                </button>
               </div>
             </div>
           </dialog>
         )}
       </div>
+
+      {/* FAB per nuovo evento (mobile) */}
+      <button className="fab" onClick={openCreateQuick} aria-label="Nuovo evento">
+        <span className="material-symbols-rounded">add</span>
+      </button>
     </>
   )
 }
