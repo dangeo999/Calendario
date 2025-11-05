@@ -650,33 +650,37 @@ dialog::backdrop{
 
 /* ---------- Modal mobile fix ---------- */
 @media (max-width: 640px) {
-  /* il <dialog> si adatta allo schermo */
+  /* il <dialog> si adatta allo schermo ma non taglia in alto/basso */
   dialog.modal {
-    margin:0;
+    margin: 0;
     padding: 0;
     width: 95vw;
     max-width: 95vw;
+    max-height: 100vh;   /* niente height fissa, solo limite massimo */
   }
 
-  /* il pannello interno occupa quasi tutto lo schermo ed è scrollabile */
+  /* pannello scrollabile con un po' di respiro sotto */
   .panel {
     width: 95vw;
     max-width: 95vw;
-    max-height: 90vh;
+    max-height: calc(100vh - 16px);  /* lascia un filo di margine */
     box-sizing: border-box;
     overflow-y: auto;
+    padding-bottom: 24px;            /* così l’ultima riga non viene schiacciata */
   }
 
-  /* dentro la modale, niente 2 colonne su mobile */
+  /* una colonna sola su mobile per evitare overflow laterali */
   .panel .row {
-    grid-template-columns: 1fr;    /* una colonna sola su mobile */
+    grid-template-columns: 1fr;
   }
 
-  /* opzionale: togli un po’ di negative margin dall’header per evitare micro overflow */
+  /* su mobile tolgo lo sticky: l’header scorre con il contenuto,
+     così la prima riga non resta mai “sotto” il titolo */
   .panel__header {
-    margin-left: -10px;
-    margin-right: -10px;
+    position: static;
+    margin-left: -14px;
+    margin-right: -14px;
+    margin-top: -14px;
+    margin-bottom: 10px;
   }
 }
-
-
