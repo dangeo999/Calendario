@@ -729,4 +729,37 @@ dialog::backdrop{
     margin-top: -14px;
     margin-bottom: 10px;
   }
+    .sheet {
+    position: sticky;
+    top: 0;
+    z-index: 19;
+    background: #fff;
+    border-bottom: 1px solid var(--md-sys-color-outline);
+    padding: 10px 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .sheet__row {
+    display: flex;
+    flex-direction: column; /* una sotto l’altra */
+    gap: 10px;
+  }
+
+  .sheet .m-field {
+    width: 100%;
+  }
+
+  .sheet__actions {
+    display: flex;
+    justify-content: center; /* bottone centrato */
+    margin-top: 6px;
+  }
+
+  .sheet__actions .m-btn {
+    width: 100%;             /* oppure: 80% se vuoi più stretto */
+    justify-content: center;
+  }
+
 }
