@@ -150,6 +150,8 @@ export default function CalendarPage() {
   const [showTableMobile, setShowTableMobile] = useState(false)
   const [showSummarySheet, setShowSummarySheet] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
+
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -676,61 +678,92 @@ const handleSendMonthlyEmail = async () => {
     <>
       {/* ===== MOBILE APPBAR ===== */}
       <div className="mobile-appbar">
-        <button className="mobile-appbar__btn" onClick={() => setShowFiltersMobile(v => !v)} aria-label="Filtri">
+        {/* HAMBURGER: apre il menu a scomparsa */}
+        <button
+          className="mobile-appbar__btn"
+          onClick={() => setShowMobileMenu(v => !v)}
+          aria-label="Menu"
+        >
           <span className="material-symbols-rounded">menu</span>
         </button>
 
+        {/* Mese + frecce + oggi (lasciati fuori) */}
         <div className="mobile-month">
           <button className="mobile-appbar__btn" onClick={gotoPrev} aria-label="Mese precedente">
             <span className="material-symbols-rounded">chevron_left</span>
           </button>
+
           <div style={{ maxWidth: '52vw' }}>
             {format(viewDate, 'MMMM yyyy', { locale: it })}
           </div>
+
           <div className="mobile-month__chev">
             <button className="mobile-appbar__btn" onClick={gotoNext} aria-label="Mese successivo">
               <span className="material-symbols-rounded">chevron_right</span>
             </button>
+
+          <button className="mobile-appbar__btn" onClick={gotoToday} aria-label="Oggi">
+            <span className="material-symbols-rounded">calendar_today</span>
+          </button>
           </div>
         </div>
-
-        <button className="mobile-appbar__btn" onClick={gotoToday} aria-label="Oggi">
-          <span className="material-symbols-rounded">calendar_today</span>
-        </button>
-
-        {/* Bottone riepilogo (apre sheet) */}
-        <button
-          className="mobile-appbar__btn"
-          onClick={() => setShowSummarySheet(v => !v)}
-          aria-label="Riepilogo mese"
-          title="Riepilogo mese"
-        >
-          <span className="material-symbols-rounded">
-            {showSummarySheet ? 'expand_less' : 'insights'}
-          </span>
-        </button>
-
-
-        <button className="mobile-appbar__btn" onClick={handleSendMonthlyEmail} disabled={sendingMail} aria-label="Invia riepilogo">
-          <span className="material-symbols-rounded">{sendingMail ? 'hourglass_top' : 'task_alt'}</span>
-        </button>
-
-        <a href="/login" className="mobile-appbar__btn" aria-label="Profilo">
-          <div className="mobile-avatar">
-            {initialsOf(
-              profiles.find(p => p.id === authUser?.id)?.full_name
-              || authUser?.user_metadata?.full_name
-              || authUser?.user_metadata?.name
-              || (authUser?.email?.split('@')[0])
-            )}
-          </div>
-        </a>
       </div>
+
+      {/* MENU A SCOMPARSA SOTTO L’APPBAR */}
+      {showMobileMenu && (
+        <div className="mobile-menu mobile-menu--open">
+          <button
+            className="mobile-menu__item"
+            onClick={() => {
+              setShowFiltersMobile(prev => !prev)
+              setShowMobileMenu(false)             
+            }}
+          >
+            <span className="material-symbols-rounded">filter_list</span>
+            <span>Filtri</span>
+          </button>
+
+          <button
+            className="mobile-menu__item"
+            onClick={() => {
+              setShowSummarySheet(v => !v)
+              setShowMobileMenu(false)
+            }}
+          >
+            <span className="material-symbols-rounded">insights</span>
+            <span>Riepilogo mese</span>
+          </button>
+
+          <button
+            className="mobile-menu__item"
+            onClick={async () => {
+              await handleSendMonthlyEmail()
+              setShowMobileMenu(false)
+            }}
+            disabled={sendingMail}
+          >
+            <span className="material-symbols-rounded">
+              {sendingMail ? 'hourglass_top' : 'task_alt'}
+            </span>
+            <span>{sendingMail ? 'Invio in corso…' : 'Invia riepilogo'}</span>
+          </button>
+
+          <a
+            href="/login"
+            className="mobile-menu__item mobile-menu__item--logout"
+            onClick={() => setShowMobileMenu(false)}
+          >
+            <span className="material-symbols-rounded">logout</span>
+            <span>Esci</span>
+          </a>
+        </div>
+      )}
+
 
       {/* Sheet filtri mobile */}
       {showFiltersMobile && (
         <div className="sheet">
-          <div className="sheet__row">
+          <div className="sheet__row justify-between mr-5 ml-5">
             <select className="m-field" value={filterUser} onChange={e => setFilterUser(e.target.value)}>
               <option value="ALL">Tutti gli utenti</option>
               {profiles.map((p: any) => (
@@ -743,11 +776,11 @@ const handleSendMonthlyEmail = async () => {
                 <option key={t} value={t}>{labelOfType(t)}</option>
               ))}
             </select>
-          </div>
           <div className="sheet__actions">
             <button className="m-btn m-btn--filled" onClick={() => setShowFiltersMobile(false)}>
               <span className="material-symbols-rounded">check</span> Applica
             </button>
+          </div>
           </div>
         </div>
       )}

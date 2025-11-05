@@ -525,7 +525,8 @@ dialog::backdrop{
 .my-balances,
 .kpi-grid,
 .mobile-summary,
-.summary-toggle {
+.summary-toggle,
+.mobile-menu {
   display: none; /* nascosti di default (desktop) */
 }
 
@@ -537,7 +538,7 @@ dialog::backdrop{
 .mobile-appbar{
   position: sticky; top: 0; z-index: 20;
   display: none; /* mostrata solo sotto 640px */
-  grid-template-columns: auto 1fr auto auto auto;
+  grid-template-columns: auto 1fr; /* menu + mese/oggi */
   gap: 6px; align-items: center;
   padding: 8px;
   background: var(--md-sys-color-surface-1);
@@ -560,6 +561,47 @@ dialog::backdrop{
   background:#eef3ff; color:#143b8f; border:1px solid #d6e2ff;
   font-size:.8rem;
 }
+/* Menu a scomparsa sotto la appbar mobile */
+.mobile-menu{
+  background: var(--md-sys-color-surface-1);
+  border-bottom: 1px solid var(--md-sys-color-outline);
+  box-shadow: 0 8px 18px rgba(15,23,42,.12);
+  padding: 6px 8px 10px;
+}
+
+.mobile-menu__item{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  margin-top:4px;
+  border-radius:999px;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  font-size:.9rem;
+  text-decoration:none;
+  color:var(--md-sys-color-on-surface);
+}
+
+.mobile-menu__item .material-symbols-rounded{
+  font-size:20px;
+}
+
+.mobile-menu__item--logout{
+  color:#b00020;
+}
+
+.mobile-menu__item--logout .material-symbols-rounded{
+  color:#b00020;
+}
+
+.mobile-menu__item:disabled{
+  opacity:.6;
+  cursor:default;
+}
+
 
 /* Sheet filtri mobile */
 .sheet{
@@ -577,6 +619,10 @@ dialog::backdrop{
   .mobile-appbar { display: grid; }
   .sheet { display: block; }
   .fab { display: grid; }
+  .mobile-menu--open{
+    display:block;
+  }
+
 
   /* Nascondi la appbar desktop su mobile */
   .appbar{ display:none !important; }
