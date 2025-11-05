@@ -635,13 +635,6 @@ const handleSendMonthlyEmail = async () => {
         </div>
       )}
 
-      {monthSummary.length > 0 && (
-        <button type="button" className="summary-toggle" onClick={() => setShowTableMobile(v => !v)}>
-          <span className="material-symbols-rounded">{showTableMobile ? 'expand_less' : 'expand_more'}</span>
-          {showTableMobile ? 'Nascondi dettagli' : 'Mostra dettagli'}
-        </button>
-      )}
-
       {monthSummary.length === 0 ? (
         <div className="m-field__label" style={{ padding: '8px 10px' }}>
           Nessun dato nel mese corrente.

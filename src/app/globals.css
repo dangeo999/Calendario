@@ -647,3 +647,36 @@ dialog::backdrop{
   opacity: 0.35;
   filter: grayscale(0.4);
 }
+
+/* ---------- Modal mobile fix ---------- */
+@media (max-width: 640px) {
+  /* il <dialog> si adatta allo schermo */
+  dialog.modal {
+    margin:0;
+    padding: 0;
+    width: 95vw;
+    max-width: 95vw;
+  }
+
+  /* il pannello interno occupa quasi tutto lo schermo ed è scrollabile */
+  .panel {
+    width: 95vw;
+    max-width: 95vw;
+    max-height: 90vh;
+    box-sizing: border-box;
+    overflow-y: auto;
+  }
+
+  /* dentro la modale, niente 2 colonne su mobile */
+  .panel .row {
+    grid-template-columns: 1fr;    /* una colonna sola su mobile */
+  }
+
+  /* opzionale: togli un po’ di negative margin dall’header per evitare micro overflow */
+  .panel__header {
+    margin-left: -10px;
+    margin-right: -10px;
+  }
+}
+
+
