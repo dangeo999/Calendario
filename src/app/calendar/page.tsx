@@ -83,6 +83,15 @@ const uiTypeOf = (t: DbType): UiType => {
   return t
 }
 
+const uiTypeLabels: Record<UiType, string> = {
+  FERIE:             'Ferie',
+  SMART_WORKING:     'Smart working',
+  PERMESSO_ENTRATA:  'Permesso entrata',
+  PERMESSO_USCITA:   'Permesso uscita',
+  MALATTIA:          'Malattia',
+  PERMESSO_STUDIO:   'Permesso studio',
+}
+
 // Calcolo Pasqua (Meeus/Butcher)
 const easterSunday = (year: number) => {
   const a = year % 19
@@ -786,11 +795,56 @@ const handleSendMonthlyEmail = async () => {
       <div className="container">
         {/* Top App Bar (desktop) */}
         <div className="appbar appbar--grid m-elev-2">
+
+          {/* ── Colonna sinistra: logo + titolo + saldi ── */}
           <div className="appbar__title-wrap">
             <span className="material-symbols-rounded appbar__logo">calendar_month</span>
-            <div className="appbar__title">Calendario condiviso</div>
+            <div className="appbar-title-group">
+              <div className="appbar__title">Calendario Geoconsult</div>
+              {myBalance && (
+                <div className="appbar-balances">
+                  <span className="legend__pill legend__pill--stat">
+                    <i className="dot dot--ferie" />
+                    <span className="mono">{myBalance.ferie.toFixed(1)}</span>&nbsp;gg ferie
+                  </span>
+                  <span className="legend__pill legend__pill--stat">
+                    <i className="dot dot--entrata" />
+                    <span className="mono">{myBalance.perm.toFixed(1)}</span>&nbsp;h perm.
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* ── Colonna destra ── */}
           <div className="appbar__right">
+
+            {/* Riga superiore: utente + logout */}
+            <div className="appbar__row appbar__row--top" style={{ justifyContent: 'flex-end' }}>
+              {currentUserId && (
+                <div className="user-chip">
+                  <div className="user-chip__ava">
+                    {initialsOf(profiles.find((p: any) => p.id === currentUserId)?.full_name
+                      || authUser?.user_metadata?.full_name || authUser?.email)}
+                  </div>
+                  <span className="user-chip__name">
+                    {profiles.find((p: any) => p.id === currentUserId)?.full_name
+                      || authUser?.user_metadata?.full_name
+                      || authUser?.email
+                      || 'Utente'}
+                  </span>
+                </div>
+              )}
+              <button
+                className="m-btn m-btn--tonal"
+                title="Esci"
+                onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login' }}
+              >
+                <span className="material-symbols-rounded">logout</span>
+              </button>
+            </div>
+
+            {/* Riga inferiore: navigazione + filtri + email */}
             <div className="appbar__row appbar__row--bottom">
               <div className="segmented">
                 <button className="segmented__btn" onClick={gotoPrev}>
@@ -823,29 +877,21 @@ const handleSendMonthlyEmail = async () => {
                 ))}
               </select>
 
-              <button
-                className="m-btn m-btn--filled"
-                onClick={handleSendMonthlyEmail}
-                disabled={sendingMail}
-                title="Invia il riepilogo del mese corrente via email"
-                style={{ marginLeft: 8 }}
-              >
-                <span className="material-symbols-rounded">
-                  {sendingMail ? 'hourglass_top' : 'send'}
-                </span>
-                {sendingMail ? ' Invio…' : ' Invia riepilogo'}
-              </button>
-              <button
-                className="m-btn m-btn--tonal"
-                title="Esci"
-                onClick={async () => {
-                  await supabase.auth.signOut()
-                  window.location.href = '/login'
-                }}
-              >
-                <span className="material-symbols-rounded">logout</span>
-              </button>
+              {isBoss && (
+                <button
+                  className="m-btn m-btn--filled"
+                  onClick={handleSendMonthlyEmail}
+                  disabled={sendingMail}
+                  title="Invia il riepilogo del mese corrente via email"
+                >
+                  <span className="material-symbols-rounded">
+                    {sendingMail ? 'hourglass_top' : 'send'}
+                  </span>
+                  {sendingMail ? 'Invio…' : 'Invia riepilogo'}
+                </button>
+              )}
             </div>
+
           </div>
         </div>
 
@@ -1057,7 +1103,7 @@ const handleSendMonthlyEmail = async () => {
                           : t === 'MALATTIA' ? 'sick'
                           : 'school'}
                       </span>
-                      {t.replace('_', ' ')}
+                      {uiTypeLabels[t]}
                     </button>
                   ))}
                 </div>
@@ -1107,6 +1153,11 @@ const handleSendMonthlyEmail = async () => {
           </dialog>
         )}
       </div>
+
+      {/* FAB – solo mobile – crea evento veloce */}
+      <button className="fab" onClick={openCreateQuick} aria-label="Nuovo evento">
+        <span className="material-symbols-rounded">add</span>
+      </button>
     </>
   )
 }

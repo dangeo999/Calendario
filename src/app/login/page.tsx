@@ -5,107 +5,82 @@ import { supabase } from '@/app/lib/supabaseClient'
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [name, setName] = useState('')
-  const [isSignup, setIsSignup] = useState(false)
   const [msg, setMsg] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setMsg('')
-
-    if (isSignup) {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name: name } },
-      })
-      if (error) return setMsg(error.message)
-      const user = data.user
-      if (user) {
-        await supabase
-          .from('profiles')
-          .upsert({ id: user.id, full_name: name, role: 'EMPLOYEE' })
-      }
-      setMsg('✅ Registrazione riuscita! Ora effettua il login.')
-      setIsSignup(false)
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-      if (error) return setMsg(error.message)
+    setLoading(true)
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) { setMsg(error.message); return }
       window.location.href = '/calendar'
+    } finally {
+      setLoading(false)
     }
   }
 
-  return ( 
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
-      <form
-        onSubmit={onSubmit}
-        className="bg-white shadow-lg rounded-2xl px-8 py-10 w-full max-w-sm flex flex-col gap-4 border border-gray-200"
-      >
-        <h1 className="text-2xl font-bold text-gray-800 text-center mb-2">
-          {isSignup ? 'Crea un account' : 'Accedi'}
-        </h1>
+  return (
+    <div className="login-wrap">
+      <div className="login-card">
 
-        {isSignup && (
-          <div className="flex flex-col text-left">
-            <label className="text-sm font-medium text-gray-600 mb-1">Nome completo</label>
+        {/* Logo */}
+        <div className="login-icon-wrap">
+          <span className="material-symbols-rounded">calendar_month</span>
+        </div>
+
+        <h1 className="login-title">Calendario Geoconsult</h1>
+        <p className="login-subtitle">Inserisci le tue credenziali per accedere</p>
+
+        <form onSubmit={onSubmit} className="login-form">
+          <div className="login-field-wrap">
+            <label className="m-field__label" htmlFor="email">Email</label>
             <input
-              type="text"
-              placeholder="Mario Rossi"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              id="email"
+              type="email"
+              className="m-field"
+              placeholder="nome@geoconsult.it"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
               required
-              className="rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              autoComplete="email"
             />
           </div>
-        )}
 
-        <div className="flex flex-col text-left">
-          <label className="text-sm font-medium text-gray-600 mb-1">Email</label>
-          <input
-            type="email"
-            placeholder="esempio@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
+          <div className="login-field-wrap">
+            <label className="m-field__label" htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              className="m-field"
+              placeholder="••••••••"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+            />
+          </div>
 
-        <div className="flex flex-col text-left">
-          <label className="text-sm font-medium text-gray-600 mb-1">Password</label>
-          <input
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-
-        <button
-          type="submit"
-          className="cursor-pointer w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg py-2 transition-colors"
-        >
-          {isSignup ? 'Crea account' : 'Accedi'}
-        </button>
-
-        {/* Registrazione disabilitata: gli account vengono creati dall'amministratore */}
-
-        {msg && (
-          <p
-            className={`mt-2 text-sm text-center ${
-              msg.startsWith('✅') ? 'text-green-600' : 'text-red-600'
-            }`}
+          <button
+            type="submit"
+            className="m-btn m-btn--filled login-submit"
+            disabled={loading}
           >
-            {msg}
-          </p>
-        )}
-      </form>
+            {loading
+              ? <><span className="material-symbols-rounded" style={{ fontSize: 20 }}>hourglass_top</span> Accesso in corso…</>
+              : <><span className="material-symbols-rounded" style={{ fontSize: 20 }}>login</span> Accedi</>
+            }
+          </button>
+
+          {msg && (
+            <p className={`login-msg ${msg.startsWith('✅') ? 'login-msg--success' : 'login-msg--error'}`}>
+              {msg}
+            </p>
+          )}
+        </form>
+
+      </div>
     </div>
   )
 }
-

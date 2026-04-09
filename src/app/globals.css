@@ -530,6 +530,28 @@ dialog::backdrop{
   display: none; /* nascosti di default (desktop) */
 }
 
+/* ===== FAB – stili base (visibilità gestita dal gruppo sopra e media query) ===== */
+.fab {
+  position: fixed;
+  right: 20px; bottom: 24px;
+  z-index: 40;
+  width: 56px; height: 56px;
+  border-radius: 16px;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border: none; cursor: pointer;
+  place-items: center;
+  box-shadow: 0 4px 14px rgba(26,115,232,.40), 0 2px 5px rgba(26,115,232,.18);
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.fab:hover {
+  background: var(--md-sys-color-primary-600);
+  transform: scale(1.07);
+  box-shadow: 0 8px 24px rgba(26,115,232,.48), 0 2px 6px rgba(26,115,232,.22);
+}
+.fab:active { transform: scale(.95); }
+.fab .material-symbols-rounded { font-size: 28px; }
+
 /* La tabella DEVE essere visibile di default (desktop) */
 .table-wrap { display:block !important; }
 .summary-card{ display:block !important; }
@@ -686,6 +708,107 @@ dialog::backdrop{
 
   /* Niente tabella su mobile */
   .table-wrap { display:none !important; }
+}
+
+/* ===== AppBar grid layout (desktop) ===== */
+.appbar--grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 16px;
+}
+.appbar-title-group { display: flex; flex-direction: column; gap: 5px; }
+.appbar-balances   { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+@media (max-width: 900px) {
+  .appbar--grid { grid-template-columns: 1fr; }
+  .appbar__right { grid-column: 1 !important; grid-row: auto !important; align-items: flex-start; }
+}
+
+/* ===== User chip (appbar) ===== */
+.user-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 4px 12px 4px 5px;
+  border-radius: 999px;
+  border: 1px solid var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface-2);
+  font-size: .85rem; font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+  white-space: nowrap;
+}
+.user-chip__ava {
+  width: 28px; height: 28px; flex-shrink: 0;
+  border-radius: 999px; display: grid; place-items: center;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-weight: 700; font-size: .72rem;
+  letter-spacing: .3px;
+}
+.user-chip__name {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;
+}
+
+/* ===== Login page ===== */
+.login-wrap {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(145deg, #dceafe 0%, #f1f6ff 55%, #e6f0fe 100%);
+  padding: 20px;
+}
+.login-card {
+  width: min(400px, 100%);
+  background: var(--md-sys-color-surface-1);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-outline) 70%, transparent);
+  border-radius: 24px; padding: 40px 32px 32px;
+  box-shadow: 0 20px 60px rgba(26,115,232,.10), 0 4px 16px rgba(0,0,0,.06);
+  display: flex; flex-direction: column; align-items: center;
+}
+.login-icon-wrap {
+  width: 68px; height: 68px; border-radius: 18px;
+  background: linear-gradient(135deg, var(--md-sys-color-primary) 0%, #0d47a1 100%);
+  display: grid; place-items: center;
+  margin-bottom: 18px;
+  box-shadow: 0 8px 24px rgba(26,115,232,.32);
+}
+.login-icon-wrap .material-symbols-rounded {
+  font-size: 34px; color: #fff;
+  font-variation-settings: 'FILL' 1;
+}
+.login-title {
+  font-size: 1.5rem; font-weight: 800;
+  color: var(--md-sys-color-on-surface);
+  letter-spacing: -.2px; margin: 0 0 4px; text-align: center;
+}
+.login-subtitle {
+  font-size: .875rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0 0 26px; text-align: center;
+}
+.login-form { width: 100%; display: flex; flex-direction: column; gap: 14px; }
+.login-field-wrap { display: flex; flex-direction: column; gap: 5px; }
+.login-field-wrap .m-field__label { font-size: .85rem; }
+.login-field-wrap .m-field {
+  height: 44px; padding: 0 14px;
+  width: 100%; border-radius: 12px;
+}
+.login-submit {
+  width: 100%; justify-content: center;
+  height: 46px; font-size: 1rem; font-weight: 600;
+  margin-top: 4px; border-radius: 12px; letter-spacing: .2px;
+}
+.login-msg {
+  font-size: .875rem; padding: 10px 14px;
+  border-radius: 10px; margin: 0; text-align: center; width: 100%;
+}
+.login-msg--success { background: #e6f4ea; color: #137333; border: 1px solid #ceead6; }
+.login-msg--error   { background: #fce8e6; color: #c5221f; border: 1px solid #f5c6c4; }
+
+/* ===== Scrollbar styling ===== */
+* { scrollbar-width: thin; scrollbar-color: var(--md-sys-color-outline) transparent; }
+
+/* ===== Text selection ===== */
+::selection {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent);
 }
 
 .fc .evt--prev-month,
