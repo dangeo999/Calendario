@@ -563,14 +563,33 @@ const handleSendMonthlyEmail = async () => {
   try {
     setSendingMail(true)
 
+    // Includi tutti gli utenti, anche quelli senza eventi nel mese
+    const allRows = profiles
+      .map(p => {
+        const existing = monthSummary.find(r => r.user_id === p.id)
+        return existing ?? {
+          user_id: p.id,
+          name: p.full_name || p.id.slice(0, 6),
+          year: y,
+          month: m,
+          ferie_days: 0,
+          smart_days: 0,
+          malattia_days: 0,
+          perm_entrata_count: 0,
+          perm_uscita_count: 0,
+          perm_studio_count: 0,
+        }
+      })
+      .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
+
     const res = await fetch('/api/send-monthly-summary', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         year: y,
         month: m,
-        rows: monthSummary,
-        events, // 👈 aggiunto: elenco eventi grezzi del mese
+        rows: allRows,
+        events,
       }),
       credentials: 'include',
     })
