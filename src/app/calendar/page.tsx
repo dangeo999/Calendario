@@ -563,8 +563,9 @@ const handleSendMonthlyEmail = async () => {
   try {
     setSendingMail(true)
 
-    // Includi tutti gli utenti, anche quelli senza eventi nel mese
+    // Includi tutti gli utenti (esclusi admin), anche quelli senza eventi nel mese
     const allRows = profiles
+      .filter(p => !p.is_admin)
       .map(p => {
         const existing = monthSummary.find(r => r.user_id === p.id)
         return existing ?? {
