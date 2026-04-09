@@ -271,17 +271,18 @@ dialog.modal{ border:none; padding:0; background:transparent; align-self: center
   color: color-mix(in srgb, #c5221f 88%, #111);
 }
 
-/* Evento “nuvoletta” con bordo colore tipo */
+/* Evento “nuvoletta” con bordo colore tipo – DESKTOP */
 .fc .fc-daygrid-event{
   display:block;
   border-radius:12px;
-  padding:6px 8px;
-  margin:4px auto;
+  padding:5px 8px;
+  margin:3px auto;
   background: color-mix(in srgb, var(--evt-col, #000) 6%, transparent);
   border:1px solid var(--evt-col, var(--md-sys-color-outline));
   box-shadow:
     var(--md-elev-1),
     0 0 0 2px color-mix(in srgb, var(--evt-col, #000) 12%, transparent);
+  overflow: hidden;
 }
 .fc .fc-daygrid-event:hover{
   box-shadow:
@@ -290,10 +291,18 @@ dialog.modal{ border:none; padding:0; background:transparent; align-self: center
 }
 
 /* contenuto evento */
-.m-event{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; color: var(--md-sys-color-on-surface) }
-.m-event__title{ display:flex; align-items:center; gap:2px; font-weight:700 }
-.m-event__dot{ width:10px; height:10px; border-radius:999px; background: var(--evt-col, currentColor) }
-.m-event__type{ font-size:.6rem; opacity:.7 }
+.m-event{ display:flex; align-items:center; gap:6px; flex-wrap:nowrap; color: var(--md-sys-color-on-surface); overflow:hidden; }
+.m-event__title{ display:flex; align-items:center; gap:3px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.m-event__title span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.m-event__dot{ width:10px; height:10px; border-radius:999px; background: var(--evt-col, currentColor); flex-shrink:0; }
+.m-event__type{ font-size:.6rem; opacity:.7; white-space:nowrap; }
+
+/* “More” link */
+.fc .fc-daygrid-more-link{
+  font-size:.72rem; font-weight:700;
+  color: var(--md-sys-color-primary);
+  padding:1px 4px;
+}
 
 /* mappa classi → colore */
 .evt-ferie{ --evt-col: var(--evt-ferie); }
@@ -590,91 +599,100 @@ dialog::backdrop{
   position: sticky; top: 0; z-index: 20;
   display: none; /* mostrata solo sotto 640px */
   grid-template-columns: auto 1fr auto;
-  gap: 8px; align-items: center;
-  padding: 10px 12px;
-  background: var(--md-sys-color-surface-1);
-  border-bottom: 2px solid var(--md-sys-color-surface-2);
-  box-shadow: 0 2px 12px rgba(13,148,136,.08);
-}
-.mobile-appbar__btn{
-  appearance:none;
-  border: 1.5px solid var(--md-sys-color-outline);
+  gap: 0; align-items: center;
+  padding: 8px 8px;
   background: #fff;
-  width: 40px; height: 40px; border-radius: 12px;
-  display: grid; place-items: center; cursor: pointer;
-  color: var(--md-sys-color-on-surface);
-  transition: background .15s, border-color .15s, transform .1s;
-}
-.mobile-appbar__btn:hover { background: var(--md-sys-color-surface-2); border-color: var(--md-sys-color-primary); }
-.mobile-appbar__btn:active { transform: scale(.93); }
-.mobile-appbar__btn .material-symbols-rounded { font-size: 20px; }
-
-.mobile-month{
-  display:flex; align-items:center; justify-content:center; gap:4px;
-  font-weight:800; font-size:.95rem; letter-spacing:.1px;
-  color: var(--md-sys-color-on-surface);
-}
-.mobile-month__chev{ display:flex; gap:4px; }
-
-.mobile-avatar{
-  width: 36px; height: 36px; border-radius: 12px;
-  display: grid; place-items: center; font-weight:700;
-  background: linear-gradient(135deg, var(--md-sys-color-primary) 0%, var(--md-sys-color-primary-600) 100%);
-  color: #fff;
-  font-size: .78rem; letter-spacing: .3px;
-  box-shadow: 0 2px 8px rgba(13,148,136,.28);
-}
-
-/* Menu a scomparsa sotto la appbar mobile */
-.mobile-menu{
-  background: var(--md-sys-color-surface-1);
   border-bottom: 1px solid var(--md-sys-color-outline);
-  box-shadow: 0 8px 24px rgba(15,23,42,.10);
-  padding: 8px 12px 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+/* Bottoni circolari stile Google Calendar */
+.mobile-appbar__btn{
+  appearance: none;
+  border: none;
+  background: transparent;
+  width: 44px; height: 44px; border-radius: 999px;
+  display: grid; place-items: center; cursor: pointer;
+  color: #5f6368;
+  transition: background .15s, transform .1s;
+  flex-shrink: 0;
+}
+.mobile-appbar__btn:hover { background: rgba(0,0,0,.06); }
+.mobile-appbar__btn:active { transform: scale(.90); background: rgba(0,0,0,.10); }
+.mobile-appbar__btn .material-symbols-rounded { font-size: 22px; }
+
+/* Mese centrato, grande, con navigazione inline */
+.mobile-month{
+  display: flex; align-items: center; justify-content: center; gap: 0;
+  font-weight: 400; font-size: 1.15rem; letter-spacing: .1px;
+  color: #202124;
+  text-transform: capitalize;
+}
+.mobile-month__chev{ display:flex; gap:0; }
+
+/* Avatar: cerchio con iniziali */
+.mobile-avatar{
+  width: 32px; height: 32px; border-radius: 999px;
+  display: grid; place-items: center; font-weight: 700;
+  background: var(--md-sys-color-primary);
+  color: #fff;
+  font-size: .72rem; letter-spacing: .4px;
+}
+
+/* Menu a scomparsa sotto la appbar mobile — stile drawer Google */
+.mobile-menu{
+  background: #fff;
+  border-bottom: 1px solid var(--md-sys-color-outline);
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+  padding: 4px 8px 8px;
 }
 
 .mobile-menu__item{
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 11px 12px;
-  margin-top: 4px;
-  border-radius: 12px;
+  gap: 16px;
+  padding: 0 12px;
+  height: 48px;
+  margin-top: 0;
+  border-radius: 999px;
   border: none;
   background: transparent;
   cursor: pointer;
-  font-size: .92rem;
+  font-size: .9rem;
   font-weight: 500;
   font-family: inherit;
   text-decoration: none;
-  color: var(--md-sys-color-on-surface);
-  transition: background .15s, color .15s;
+  color: #202124;
+  transition: background .15s;
 }
-.mobile-menu__item:hover { background: var(--md-sys-color-surface-2); }
+.mobile-menu__item:hover { background: rgba(0,0,0,.05); }
+.mobile-menu__item:active { background: rgba(0,0,0,.10); }
 
 .mobile-menu__item .material-symbols-rounded{
-  font-size: 20px;
-  width: 36px; height: 36px; border-radius: 10px;
-  display: grid; place-items: center;
-  background: var(--md-sys-color-surface-2);
-  color: var(--md-sys-color-primary);
+  font-size: 22px;
+  color: #5f6368;
   flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: grid; place-items: center;
+  background: transparent;
+  border-radius: 0;
 }
 
 .mobile-menu__item--logout{
-  color: #b00020;
-  margin-top: 8px;
+  color: #c0392b;
   border-top: 1px solid var(--md-sys-color-outline);
-  padding-top: 14px;
+  margin-top: 4px;
+  border-radius: 0 0 0 0;
 }
 .mobile-menu__item--logout .material-symbols-rounded{
-  background: #fff1f2;
-  color: #b00020;
+  color: #c0392b;
+  background: transparent;
 }
 
 .mobile-menu__item:disabled{
-  opacity: .5;
+  opacity: .4;
   cursor: default;
 }
 
@@ -697,9 +715,116 @@ dialog::backdrop{
   /* Mostra la nuova appbar mobile e relativi componenti */
   .mobile-appbar { display: grid; }
   .sheet { display: block; }
-  .fab { display: grid; }
-  .mobile-menu--open{
-    display:block;
+  .fab { display: inline-flex; }
+  .mobile-menu--open { display: block; }
+
+  /* ===== Layout edge-to-edge stile Google Calendar ===== */
+  .container {
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Card calendario: rimuovi bordo/ombra/padding su mobile */
+  .card.m-elev-1 {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  /* ===== FullCalendar mobile: stile Google Calendar ===== */
+
+  /* Header colonne giorni: compatto */
+  .fc .fc-col-header-cell {
+    padding: 4px 0;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+  }
+
+  /* Cella giorno: altezza minima ridotta */
+  .fc .fc-daygrid-day {
+    min-height: 52px !important;
+  }
+  .fc .fc-daygrid-day-frame {
+    padding: 2px 1px !important;
+    min-height: 52px !important;
+  }
+
+  /* Numero del giorno: più compatto */
+  .fc .fc-daygrid-day-number {
+    font-size: .8rem;
+    padding: 2px 4px;
+    line-height: 1.4;
+  }
+
+  /* Festività: testo non va fuori dalla cella */
+  .fc .fc-daygrid-day-number[data-holiday]::after {
+    font-size: 6.5px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+    line-height: 1.2;
+    margin-top: 1px;
+  }
+
+  /* ===== Evento: ultra-compatto stile Google Calendar ===== */
+  .fc .fc-daygrid-event {
+    border-radius: 5px !important;
+    padding: 1px 4px !important;
+    margin: 1px 1px 0 !important;
+    min-height: unset !important;
+    height: 16px !important;
+    overflow: hidden !important;
+    box-shadow: none !important;
+    border-width: 1px !important;
+    /* background con opacità ridotta per compattezza */
+    background: color-mix(in srgb, var(--evt-col, #000) 12%, #fff) !important;
+  }
+  .fc .fc-daygrid-event:hover {
+    box-shadow: none !important;
+  }
+
+  .m-event {
+    gap: 3px;
+    flex-wrap: nowrap;
+    align-items: center;
+    height: 14px;
+    overflow: hidden;
+  }
+  .m-event__dot {
+    width: 6px !important; height: 6px !important;
+    flex-shrink: 0;
+  }
+  .m-event__title {
+    font-size: .58rem !important;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    gap: 0 !important;
+    line-height: 1;
+    max-width: 100%;
+    text-overflow: ellipsis;
+  }
+  .m-event__title span {
+    max-width: 28px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+  }
+
+  /* "+N altri" link */
+  .fc .fc-daygrid-more-link {
+    font-size: .6rem;
+    font-weight: 700;
+    color: var(--md-sys-color-primary);
+    line-height: 1.4;
+    padding: 0 2px;
   }
 
 
@@ -708,14 +833,33 @@ dialog::backdrop{
 
   /* Card riepilogo in versione mobile pulita */
   .summary-card{
-    background:#fff; border:1px solid var(--md-sys-color-outline);
-    border-radius:14px; padding:12px; box-shadow: var(--md-elev-1);
+    background: #fff;
+    border: none;
+    border-bottom: 1px solid var(--md-sys-color-outline);
+    border-radius: 0;
+    padding: 14px 16px 12px;
+    box-shadow: none;
   }
   .summary-card .panel__header{
     background:transparent; border:none; box-shadow:none;
-    margin: -4px -4px 8px; padding: 0 4px;
+    margin: 0 0 10px; padding: 0;
   }
-  .summary-title{ font-weight:800; letter-spacing:.2px; }
+  .summary-title{ font-weight:700; font-size:.95rem; color: #202124; letter-spacing:.1px; }
+
+  /* Today: cerchio teal stile Google Calendar */
+  .fc .fc-day-today .fc-daygrid-day-number {
+    background: var(--md-sys-color-primary) !important;
+    color: #fff !important;
+    border-radius: 999px !important;
+    width: 26px; height: 26px;
+    display: flex !important; align-items: center; justify-content: center;
+    font-weight: 700 !important;
+    padding: 0 !important;
+    margin: 2px auto 0 !important;
+  }
+  .fc .fc-day-today {
+    background: rgba(13,148,136,.04) !important;
+  }
 
   /* Saldi personali compatti (solo mobile) */
   .my-balances{

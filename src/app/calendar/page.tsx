@@ -905,7 +905,7 @@ const handleSendMonthlyEmail = async () => {
             initialView="dayGridMonth"
             height="auto"
             expandRows
-            dayMaxEvents={3}
+            dayMaxEvents={isMobile ? 2 : 3}
             nowIndicator
             selectable
             selectMirror
