@@ -93,13 +93,7 @@ export default function LoginPage() {
           {isSignup ? 'Crea account' : 'Accedi'}
         </button>
 
-        <button
-          type="button"
-          onClick={() => setIsSignup((v) => !v)}
-          className="cursor-pointer w-full text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
-        >
-          {isSignup ? 'Hai già un account? Accedi' : 'Non hai un account? Registrati'}
-        </button>
+        {/* Registrazione disabilitata: gli account vengono creati dall'amministratore */}
 
         {msg && (
           <p

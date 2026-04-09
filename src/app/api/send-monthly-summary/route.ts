@@ -15,6 +15,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: 'Anno o mese mancanti' }, { status: 400 })
     }
 
+    if (year < 2000 || year > 2100 || month < 1 || month > 12) {
+      return NextResponse.json({ ok: false, error: 'Anno o mese non validi' }, { status: 400 })
+    }
+
     if (!rows || !Array.isArray(rows) || rows.length === 0) {
       return NextResponse.json({ ok: false, error: 'Nessun dato da inviare' }, { status: 400 })
     }
@@ -56,14 +60,6 @@ export async function POST(req: Request) {
         ok: false,
         error: err?.message,
         code: err?.code,
-        response: err?.response,
-        debug: {
-          host: process.env.SMTP_HOST,
-          port: process.env.SMTP_PORT,
-          secure: process.env.SMTP_SECURE,
-          user: process.env.SMTP_USER,
-          from: process.env.MAIL_FROM,
-        },
       },
       { status: 500 }
     )

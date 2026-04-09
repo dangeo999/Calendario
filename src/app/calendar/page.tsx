@@ -768,14 +768,17 @@ const handleSendMonthlyEmail = async () => {
             <span>{sendingMail ? 'Invio in corso…' : 'Invia riepilogo'}</span>
           </button>
 
-          <a
-            href="/login"
+          <button
             className="mobile-menu__item mobile-menu__item--logout"
-            onClick={() => setShowMobileMenu(false)}
+            onClick={async () => {
+              setShowMobileMenu(false)
+              await supabase.auth.signOut()
+              window.location.href = '/login'
+            }}
           >
             <span className="material-symbols-rounded">logout</span>
             <span>Esci</span>
-          </a>
+          </button>
         </div>
       )}
 
@@ -857,9 +860,16 @@ const handleSendMonthlyEmail = async () => {
                 </span>
                 {sendingMail ? ' Invio…' : ' Invia riepilogo'}
               </button>
-              <a href="/login" className="m-btn m-btn--tonal" title="Esci">
+              <button
+                className="m-btn m-btn--tonal"
+                title="Esci"
+                onClick={async () => {
+                  await supabase.auth.signOut()
+                  window.location.href = '/login'
+                }}
+              >
                 <span className="material-symbols-rounded">logout</span>
-              </a>
+              </button>
             </div>
           </div>
         </div>
