@@ -3,7 +3,7 @@ import './globals.css'
 
 export const metadata = {
   manifest: "/manifest.json",
-  themeColor: "#1765cc",
+  themeColor: "#0D9488",
   icons: {
     icon: "/icons/icon-192.png",
     apple: "/icons/icon-192.png"
@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0"
+          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0"
           rel="stylesheet"
         />
         {/* CSS FullCalendar (una sola volta qui) */}

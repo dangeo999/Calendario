@@ -1157,6 +1157,7 @@ const handleSendMonthlyEmail = async () => {
       {/* FAB – solo mobile – crea evento veloce */}
       <button className="fab" onClick={openCreateQuick} aria-label="Nuovo evento">
         <span className="material-symbols-rounded">add</span>
+        <span>Nuovo</span>
       </button>
     </>
   )
