@@ -1217,3 +1217,33 @@ dialog::backdrop{
   }
 
 }
+
+/* =====================================================
+   Wizard panel
+   ===================================================== */
+.wizard-panel {
+  width: min(400px, 94vw);
+  padding: 0;
+  overflow: hidden;
+}
+
+/* =====================================================
+   Summary table: colored dot in header cells
+   ===================================================== */
+.th-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.m-table thead th {
+  white-space: nowrap;
+}
+.m-table tfoot td {
+  padding: 10px 8px;
+  border-top: 2px solid var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface-2);
+  text-align: center;
+}

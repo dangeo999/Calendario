@@ -160,6 +160,9 @@ export default function CalendarPage() {
   const [showSummarySheet, setShowSummarySheet] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1)
+  const [miniCalDate, setMiniCalDate] = useState<Date>(new Date())
+  const [rangePhase, setRangePhase] = useState<'start' | 'end'>('start')
 
 
   useEffect(() => {
@@ -191,6 +194,9 @@ export default function CalendarPage() {
       type: 'SMART_WORKING',
       note: '',
     })
+    setWizardStep(1)
+    setRangePhase('start')
+    setMiniCalDate(new Date())
     setOpen(true)
     setTimeout(() => dlgRef.current?.showModal(), 0)
   }
@@ -378,16 +384,20 @@ export default function CalendarPage() {
   // --- Handlers ---
   const onSelect = (info: any) => {
     const day = toDateInput(info.startStr)
+    const endDay = info.endStr ? addDays(toDateInput(info.endStr), -1) : day
     setDraft({
       mode: 'create',
       date: day,
       startDate: day,
-      endDate: day,
+      endDate: endDay,
       time: '09:00',
       durationHours: 1,
       type: 'SMART_WORKING',
       note: '',
     })
+    setWizardStep(1)
+    setRangePhase('start')
+    setMiniCalDate(new Date(day + 'T12:00:00'))
     setOpen(true)
     setTimeout(() => dlgRef.current?.showModal(), 0)
   }
@@ -403,6 +413,9 @@ export default function CalendarPage() {
       type: 'SMART_WORKING',
       note: '',
     })
+    setWizardStep(1)
+    setRangePhase('start')
+    setMiniCalDate(new Date(day + 'T12:00:00'))
     setOpen(true)
     setTimeout(() => dlgRef.current?.showModal(), 0)
   }
@@ -440,6 +453,8 @@ export default function CalendarPage() {
       })
     }
 
+    setWizardStep(3)
+    setRangePhase('start')
     setOpen(true)
     setTimeout(() => dlgRef.current?.showModal(), 0)
   }
@@ -561,6 +576,71 @@ export default function CalendarPage() {
     PERMESSO_STUDIO:             'school',
   }
 
+  // Wizard helpers
+  const typeColors: Record<UiType, string> = {
+    FERIE:             '#e53935',
+    SMART_WORKING:     '#00897b',
+    PERMESSO_ENTRATA:  '#1e88e5',
+    PERMESSO_USCITA:   '#5e35b1',
+    MALATTIA:          '#212121',
+    PERMESSO_STUDIO:   '#f9a825',
+  }
+  const typeIconsUI: Record<UiType, string> = {
+    FERIE:             'beach_access',
+    SMART_WORKING:     'home_work',
+    PERMESSO_ENTRATA:  'login',
+    PERMESSO_USCITA:   'logout',
+    MALATTIA:          'medical_services',
+    PERMESSO_STUDIO:   'school',
+  }
+  const formatShortDate = (iso?: string) => {
+    if (!iso) return '—'
+    const [, m, d] = iso.split('-').map(Number)
+    const months = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic']
+    return `${d} ${months[m - 1]}`
+  }
+  const countWorkdays = (start: string, end: string): number => {
+    const [sy, sm, sd] = start.split('-').map(Number)
+    const [ey, em, ed] = end.split('-').map(Number)
+    let count = 0
+    const cur = new Date(Date.UTC(sy, sm - 1, sd))
+    const last = new Date(Date.UTC(ey, em - 1, ed))
+    while (cur <= last) {
+      const dow = cur.getUTCDay()
+      const dateStr = cur.toISOString().slice(0, 10)
+      const hols = italianHolidaysOf(cur.getUTCFullYear())
+      if (dow !== 0 && dow !== 6 && !hols.get(dateStr)) count++
+      cur.setUTCDate(cur.getUTCDate() + 1)
+    }
+    return count
+  }
+  type CalDay = { day: number | null; date: string; isToday: boolean; isWeekend: boolean }
+  const getMiniCalDays = (year: number, month: number): CalDay[] => {
+    const firstDow = (new Date(year, month, 1).getDay() + 6) % 7
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    const todayStr = ymdLocal(new Date())
+    const days: CalDay[] = []
+    for (let i = 0; i < firstDow; i++) days.push({ day: null, date: '', isToday: false, isWeekend: false })
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(year, month, d)
+      const dow = date.getDay()
+      days.push({ day: d, date: ymdLocal(date), isToday: ymdLocal(date) === todayStr, isWeekend: dow === 0 || dow === 6 })
+    }
+    return days
+  }
+  const renderNumBadge = (value: number | null | undefined, color: string) => {
+    const n = Number(value || 0)
+    if (!n) return <span style={{ color: '#94a3b8' }}>—</span>
+    return (
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        minWidth: 26, height: 26, borderRadius: 999,
+        background: color, color: color === '#212121' ? '#fff' : 'white',
+        fontWeight: 700, fontSize: '.82rem', padding: '0 6px',
+      }}>{n}</span>
+    )
+  }
+
   // Event rendering
   const renderEvent = (arg: EventContentArg) => {
     const typeDb = (arg.event.extendedProps as any).type as DbType
@@ -661,27 +741,48 @@ const handleSendMonthlyEmail = async () => {
             <thead>
               <tr>
                 <th>Utente</th>
-                <th>Ferie (gg)</th>
-                <th>Smart (gg)</th>
-                <th>Malattia (gg)</th>
-                <th>Perm. entrata (h)</th>
-                <th>Perm. uscita (h)</th>
-                <th>Perm. studio (h)</th>
+                <th><span className="th-dot" style={{ background:'var(--evt-ferie)' }} />Ferie (gg)</th>
+                <th><span className="th-dot" style={{ background:'var(--evt-smart)' }} />Smart (gg)</th>
+                <th><span className="th-dot" style={{ background:'var(--evt-malattia)' }} />Malattia (gg)</th>
+                <th><span className="th-dot" style={{ background:'var(--evt-entrata)' }} />P. Entrata (h)</th>
+                <th><span className="th-dot" style={{ background:'var(--evt-uscita)' }} />P. Uscita (h)</th>
+                <th><span className="th-dot" style={{ background:'var(--evt-studio)' }} />P. Studio (h)</th>
               </tr>
             </thead>
             <tbody>
-              {monthSummary.map(r => (
-                <tr key={r.user_id}>
-                  <td>{r.name}</td>
-                  <td className="mono">{r.ferie_days}</td>
-                  <td className="mono">{r.smart_days}</td>
-                  <td className="mono">{r.malattia_days}</td>
-                  <td className="mono">{r.perm_entrata_count}</td>
-                  <td className="mono">{r.perm_uscita_count}</td>
-                  <td className="mono">{r.perm_studio_count}</td>
-                </tr>
-              ))}
+              {monthSummary.map(r => {
+                const initials = initialsOf(r.name)
+                return (
+                  <tr key={r.user_id}>
+                    <td>
+                      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                        <div style={{ width:28, height:28, borderRadius:8, background:'linear-gradient(135deg, var(--md-sys-color-primary) 0%, var(--md-sys-color-primary-600) 100%)', color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'.65rem', fontWeight:700, flexShrink:0 }}>
+                          {initials}
+                        </div>
+                        <span>{r.name}</span>
+                      </div>
+                    </td>
+                    <td>{renderNumBadge(r.ferie_days, 'var(--evt-ferie)')}</td>
+                    <td>{renderNumBadge(r.smart_days, 'var(--evt-smart)')}</td>
+                    <td>{renderNumBadge(r.malattia_days, '#555')}</td>
+                    <td>{renderNumBadge(r.perm_entrata_count, 'var(--evt-entrata)')}</td>
+                    <td>{renderNumBadge(r.perm_uscita_count, 'var(--evt-uscita)')}</td>
+                    <td>{renderNumBadge(r.perm_studio_count, 'var(--evt-studio)')}</td>
+                  </tr>
+                )
+              })}
             </tbody>
+            {isBoss && monthSummary.length > 1 && (
+              <tfoot>
+                <tr>
+                  <td style={{ fontWeight:700, color:'var(--md-sys-color-on-surface-variant)', fontSize:'.82rem' }}>Totali mese</td>
+                  <td>{renderNumBadge(totals.ferie, 'var(--evt-ferie)')}</td>
+                  <td>{renderNumBadge(totals.smart, 'var(--evt-smart)')}</td>
+                  <td>{renderNumBadge(totals.mal, '#555')}</td>
+                  <td colSpan={3}>{renderNumBadge(totals.permH, 'var(--evt-entrata)')}</td>
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
       )}
@@ -1019,164 +1120,303 @@ const handleSendMonthlyEmail = async () => {
           </div>
         </div>
 
-        {/* MODAL create/edit */}
+        {/* MODAL – 3-Step Wizard */}
         {open && (
           <dialog ref={dlgRef} className="modal" onClose={() => { setOpen(false); setDraft(null) }}>
-            <div className="panel m-elev-3">
-              <div className="panel__header">
-                <div className="panel__title">
-                  {draft?.mode === 'create' ? 'Nuovo evento' : 'Modifica evento'}
+            <div className="panel wizard-panel m-elev-3">
+
+              {/* Drag handle */}
+              <div style={{ display:'flex', justifyContent:'center', padding:'12px 0 6px' }}>
+                <div style={{ width:36, height:4, background:'#e2e8f0', borderRadius:2 }} />
+              </div>
+
+              {/* Step indicator + close */}
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 16px 6px' }}>
+                <div style={{ display:'flex', alignItems:'center' }}>
+                  {([1,2,3] as const).map((s, i) => (
+                    <React.Fragment key={s}>
+                      {i > 0 && (
+                        <div style={{ width:36, height:2, margin:'0 6px', background: wizardStep > i ? '#86efac' : '#e2e8f0', transition:'background .3s' }} />
+                      )}
+                      <div style={{
+                        width: wizardStep === s ? 28 : 10, height:10,
+                        borderRadius: wizardStep === s ? 5 : '50%',
+                        background: wizardStep > s ? '#86efac' : wizardStep === s ? 'var(--md-sys-color-primary)' : '#e2e8f0',
+                        transition:'all .3s',
+                      }} />
+                    </React.Fragment>
+                  ))}
                 </div>
                 <button className="panel__close" onClick={() => dlgRef.current?.close()} aria-label="Chiudi">
                   <span className="material-symbols-rounded">close</span>
                 </button>
               </div>
 
-              <div className="summary">
-                <span className="material-symbols-rounded">event</span>
-                <span>
-                  {draft?.date}
-                  {isPermesso(draft?.type ?? 'FERIE') ? (
-                    <em className="summary__days"> • {draft?.time}</em>
-                  ) : (
-                    <em className="summary__days"> • {draft?.startDate} → {draft?.endDate}</em>
-                  )}
-                </span>
+              {/* Step title */}
+              <div style={{ fontFamily:'var(--md-sys-font-heading)', fontSize:16, fontWeight:700, padding:'4px 20px 2px', color:'var(--md-sys-color-on-surface)' }}>
+                {wizardStep === 1 ? 'Tipo di assenza' : wizardStep === 2 ? 'Periodo' : 'Conferma evento'}
               </div>
 
-              {isPermesso(draft?.type ?? 'FERIE') ? (
-                <>
-                  <div className="row">
-                    <div className="col">
-                      <label className="m-field__label">Giorno</label>
-                      <input type="date" className="m-field" value={draft?.date || ''} readOnly />
-                    </div>
-                    <div className="col">
-                      <label className="m-field__label">
-                        {draft?.type === 'PERMESSO_ENTRATA' ? 'Ora di entrata' : 'Ora di uscita'}
-                      </label>
-                      <input
-                        type="time"
-                        className="m-field"
-                        value={draft?.time || ''}
-                        onChange={e => setDraft(v => v ? ({ ...v, time: e.target.value }) : v)}
-                      />
-                    </div>
-                    <div className="col">
-                      <label className="m-field__label">Durata (ore)</label>
-                      <input
-                        type="number"
-                        min={1} step={1}
-                        className="m-field"
-                        value={draft?.durationHours ?? 1}
-                        onChange={e => setDraft(v => v ? ({ ...v, durationHours: Number(e.target.value || 1) }) : v)}
-                      />
+              {/* ─── Step content ─── */}
+              <div style={{ padding:'10px 16px 20px' }}>
+
+                {/* ── STEP 1: Tipo ── */}
+                {wizardStep === 1 && (
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+                    {(['FERIE','SMART_WORKING','PERMESSO_ENTRATA','PERMESSO_USCITA','MALATTIA','PERMESSO_STUDIO'] as UiType[]).map(t => {
+                      const col = typeColors[t]
+                      const sel = draft?.type === t
+                      return (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => {
+                            setDraft(v => v ? { ...v, type: t } : v)
+                            setRangePhase('start')
+                            setWizardStep(2)
+                          }}
+                          style={{
+                            display:'flex', alignItems:'center', gap:10,
+                            padding:'12px 14px', borderRadius:14, cursor:'pointer',
+                            border:`2px solid ${sel ? col : 'var(--md-sys-color-outline)'}`,
+                            background: sel ? col : 'white', transition:'all .2s', textAlign:'left',
+                          }}
+                        >
+                          <div style={{ width:34, height:34, borderRadius:10, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', background: sel ? 'rgba(255,255,255,.25)' : col }}>
+                            <span className="material-symbols-rounded" style={{ fontSize:18, color:'white', fontVariationSettings:"'FILL' 1" }}>{typeIconsUI[t]}</span>
+                          </div>
+                          <span style={{ fontFamily:'var(--md-sys-font-heading)', fontSize:12, fontWeight:600, lineHeight:1.2, color: sel ? 'white' : 'var(--md-sys-color-on-surface)' }}>
+                            {uiTypeLabels[t]}
+                          </span>
+                        </button>
+                      )
+                    })}
+                    <div style={{ gridColumn:'1 / -1', textAlign:'center', paddingTop:6 }}>
+                      <span style={{ fontSize:11, color:'var(--md-sys-color-on-surface-variant)' }}>Seleziona un tipo per procedere</span>
                     </div>
                   </div>
-                </>
-              ) : (
-                <>
-                  <div className="row">
-                    <div className="col">
-                      <label className="m-field__label">Inizio</label>
-                      <input
-                        type="date"
-                        className="m-field"
-                        value={draft?.startDate || ''}
-                        onChange={e => setDraft(v => v ? ({
-                          ...v,
-                          startDate: e.target.value,
-                          endDate: (v.endDate && v.endDate < e.target.value) ? e.target.value : v.endDate,
-                          date: e.target.value
-                        }) : v)}
-                      />
-                    </div>
-                    <div className="col">
-                      <label className="m-field__label">Fine</label>
-                      <input
-                        type="date"
-                        className="m-field"
-                        value={draft?.endDate || ''}
-                        onChange={e => setDraft(v => v ? ({
-                          ...v,
-                          endDate: (e.target.value < (v.startDate || v.date)) ? (v.startDate || v.date) : e.target.value
-                        }) : v)}
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              <div className="block">
-                <label className="m-field__label">Tipo</label>
-                <div className="chip-group">
-                  {([
-                    'FERIE',
-                    'SMART_WORKING',
-                    'PERMESSO_ENTRATA',
-                    'PERMESSO_USCITA',
-                    'MALATTIA',
-                    'PERMESSO_STUDIO',
-                  ] as UiType[]).map(t => (
-                    <button
-                      key={t}
-                      type="button"
-                      className={`chip ${draft?.type === t ? 'chip--selected' : ''}`}
-                      onClick={() => setDraft(v => v ? ({ ...v, type: t }) : v)}
-                    >
-                      <span className="material-symbols-rounded">
-                        {t === 'FERIE' ? 'beach_access'
-                          : t === 'SMART_WORKING' ? 'home_work'
-                          : t === 'PERMESSO_ENTRATA' ? 'login'
-                          : t === 'PERMESSO_USCITA' ? 'logout'
-                          : t === 'MALATTIA' ? 'sick'
-                          : 'school'}
-                      </span>
-                      {uiTypeLabels[t]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="block">
-                <label className="m-field__label">Note</label>
-                <textarea
-                  className="m-field textarea"
-                  value={draft?.note || ''}
-                  onChange={e => setDraft(v => v ? ({ ...v, note: e.target.value }) : v)}
-                />
-              </div>
-
-              <div className="panel__actions">
-                {draft?.mode === 'edit' && (
-                  <button
-                    type="button"
-                    className="m-btn m-btn--danger"
-                    onClick={onDelete}
-                  >
-                    <span className="material-symbols-rounded">delete</span>
-                    Elimina
-                  </button>
                 )}
-                <button
-                  type="button"
-                  className="m-btn"
-                  onClick={() => {
-                    dlgRef.current?.close()
-                    setOpen(false)
-                    setDraft(null)
-                  }}
-                >
-                  Annulla
-                </button>
-                <button
-                  type="button"
-                  className="m-btn m-btn--filled"
-                  onClick={draft?.mode === 'edit' ? onUpdate : onCreate}
-                >
-                  <span className="material-symbols-rounded">check</span>
-                  Salva
-                </button>
+
+                {/* ── STEP 2: Date ── */}
+                {wizardStep === 2 && draft && (
+                  <>
+                    {/* Back */}
+                    <button type="button" onClick={() => setWizardStep(1)}
+                      style={{ display:'flex', alignItems:'center', gap:4, background:'transparent', border:'none', cursor:'pointer', color:'var(--md-sys-color-on-surface-variant)', fontSize:12, fontWeight:500, padding:'0 0 10px', fontFamily:'inherit' }}
+                    >
+                      <span className="material-symbols-rounded" style={{ fontSize:15 }}>arrow_back</span>
+                      Cambia tipo
+                    </button>
+
+                    {/* Badge tipo */}
+                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
+                      <span style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'5px 12px 5px 8px', borderRadius:20, background:typeColors[draft.type], fontFamily:'var(--md-sys-font-heading)', fontSize:12, fontWeight:600, color:'white' }}>
+                        <span className="material-symbols-rounded" style={{ fontSize:15, fontVariationSettings:"'FILL' 1" }}>{typeIconsUI[draft.type]}</span>
+                        {uiTypeLabels[draft.type]}
+                      </span>
+                      <span style={{ fontSize:11, color:'var(--md-sys-color-on-surface-variant)' }}>selezionato</span>
+                    </div>
+
+                    {isPermesso(draft.type) ? (
+                      /* Permesso: inputs */
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:16 }}>
+                        <div className="col">
+                          <label className="m-field__label">Giorno</label>
+                          <input type="date" className="m-field" value={draft.date || ''}
+                            onChange={e => setDraft(v => v ? { ...v, date: e.target.value } : v)} />
+                        </div>
+                        <div className="col">
+                          <label className="m-field__label">{draft.type === 'PERMESSO_ENTRATA' ? 'Ora entrata' : 'Ora uscita'}</label>
+                          <input type="time" className="m-field" value={draft.time || ''}
+                            onChange={e => setDraft(v => v ? { ...v, time: e.target.value } : v)} />
+                        </div>
+                        <div className="col" style={{ gridColumn:'1 / -1' }}>
+                          <label className="m-field__label">Durata (ore)</label>
+                          <input type="number" min={1} step={1} className="m-field" value={draft.durationHours ?? 1}
+                            onChange={e => setDraft(v => v ? { ...v, durationHours: Number(e.target.value || 1) } : v)} />
+                        </div>
+                      </div>
+                    ) : (
+                      /* Mini calendar */
+                      <>
+                        <div style={{ background:'#F8FAFC', borderRadius:14, padding:12, marginBottom:14 }}>
+                          {/* Header */}
+                          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+                            <span style={{ fontFamily:'var(--md-sys-font-heading)', fontSize:13, fontWeight:700, color:'var(--md-sys-color-on-surface)', textTransform:'capitalize' }}>
+                              {format(miniCalDate, 'MMMM yyyy', { locale: it })}
+                            </span>
+                            <div style={{ display:'flex', gap:2 }}>
+                              {([-1, 1] as const).map(dir => (
+                                <button key={dir} type="button"
+                                  style={{ width:28, height:28, borderRadius:8, border:'none', background:'white', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--md-sys-color-on-surface-variant)', boxShadow:'0 1px 4px rgba(0,0,0,.08)' }}
+                                  onClick={() => setMiniCalDate(d => { const nd = new Date(d); nd.setMonth(nd.getMonth() + dir); return nd })}
+                                >
+                                  <span className="material-symbols-rounded" style={{ fontSize:16 }}>{dir === -1 ? 'chevron_left' : 'chevron_right'}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          {/* Grid */}
+                          <div style={{ display:'grid', gridTemplateColumns:'repeat(7, 1fr)', gap:2 }}>
+                            {['L','M','M','G','V','S','D'].map((l, i) => (
+                              <div key={i} style={{ fontSize:9, fontWeight:700, color:'var(--md-sys-color-on-surface-variant)', textAlign:'center', padding:'3px 0', fontFamily:'var(--md-sys-font-heading)' }}>{l}</div>
+                            ))}
+                            {getMiniCalDays(miniCalDate.getFullYear(), miniCalDate.getMonth()).map((day, i) => {
+                              if (!day.day) return <div key={i} />
+                              const isStart = day.date === draft.startDate
+                              const isEnd = day.date === draft.endDate
+                              const isInRange = !!(draft.startDate && draft.endDate && draft.startDate !== draft.endDate && day.date > draft.startDate && day.date < draft.endDate)
+                              const selected = isStart || isEnd
+                              return (
+                                <div key={i}
+                                  onClick={() => {
+                                    if (rangePhase === 'start') {
+                                      setDraft(v => v ? { ...v, startDate: day.date, endDate: day.date, date: day.date } : v)
+                                      setRangePhase('end')
+                                    } else {
+                                      if (day.date >= (draft.startDate || draft.date)) {
+                                        setDraft(v => v ? { ...v, endDate: day.date } : v)
+                                        setRangePhase('start')
+                                      } else {
+                                        setDraft(v => v ? { ...v, startDate: day.date, endDate: day.date, date: day.date } : v)
+                                      }
+                                    }
+                                  }}
+                                  style={{
+                                    fontSize:11, textAlign:'center', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center',
+                                    margin:'0 auto', cursor:'pointer',
+                                    borderRadius: isInRange ? 0 : '50%',
+                                    background: selected ? 'var(--md-sys-color-primary)' : isInRange ? '#DBEAFE' : 'transparent',
+                                    color: selected ? 'white' : isInRange ? 'var(--md-sys-color-primary)' : day.isWeekend ? '#94a3b8' : day.isToday ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-on-surface)',
+                                    fontWeight: selected || day.isToday ? 700 : 500,
+                                  }}
+                                >{day.day}</div>
+                              )
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Date chips */}
+                        <div style={{ display:'grid', gridTemplateColumns:'1fr auto 1fr', alignItems:'center', gap:8, marginBottom:12 }}>
+                          <div style={{ background:'white', border:`2px solid ${rangePhase === 'start' ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline)'}`, borderRadius:10, padding:'8px 12px', textAlign:'center', fontFamily:'var(--md-sys-font-heading)', fontSize:12, fontWeight:600, color:'var(--md-sys-color-on-surface)' }}>
+                            <small style={{ display:'block', fontSize:9, color:'var(--md-sys-color-on-surface-variant)', fontWeight:500, marginBottom:2 }}>DAL</small>
+                            {formatShortDate(draft.startDate)}
+                          </div>
+                          <span className="material-symbols-rounded" style={{ fontSize:18, color:'var(--md-sys-color-on-surface-variant)' }}>arrow_forward</span>
+                          <div style={{ background:'white', border:`2px solid ${rangePhase === 'end' ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline)'}`, borderRadius:10, padding:'8px 12px', textAlign:'center', fontFamily:'var(--md-sys-font-heading)', fontSize:12, fontWeight:600, color:'var(--md-sys-color-on-surface)' }}>
+                            <small style={{ display:'block', fontSize:9, color:'var(--md-sys-color-on-surface-variant)', fontWeight:500, marginBottom:2 }}>AL</small>
+                            {formatShortDate(draft.endDate)}
+                          </div>
+                        </div>
+
+                        {/* Workdays badge */}
+                        {draft.startDate && draft.endDate && (
+                          <div style={{ display:'flex', justifyContent:'center', marginBottom:14 }}>
+                            <span style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'6px 14px', borderRadius:20, background:'#fed7aa', color:'#9a3412', fontFamily:'var(--md-sys-font-heading)', fontSize:12, fontWeight:700 }}>
+                              <span className="material-symbols-rounded" style={{ fontSize:14, fontVariationSettings:"'FILL' 1" }}>work_history</span>
+                              {countWorkdays(draft.startDate, draft.endDate)} gg lavorativi
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    <button type="button"
+                      style={{ width:'100%', padding:13, borderRadius:14, border:'none', background:'var(--md-sys-color-primary)', color:'white', fontFamily:'var(--md-sys-font-heading)', fontSize:14, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}
+                      onClick={() => setWizardStep(3)}
+                    >
+                      Avanti
+                      <span className="material-symbols-rounded" style={{ fontSize:18 }}>arrow_forward</span>
+                    </button>
+                  </>
+                )}
+
+                {/* ── STEP 3: Riepilogo ── */}
+                {wizardStep === 3 && draft && (
+                  <>
+                    {/* Summary card */}
+                    <div style={{ borderRadius:16, overflow:'hidden', border:`2px solid ${typeColors[draft.type]}44`, marginBottom:16 }}>
+                      {/* Header */}
+                      <div style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12, background:`linear-gradient(135deg, ${typeColors[draft.type]}ee, ${typeColors[draft.type]}bb)` }}>
+                        <div style={{ width:44, height:44, borderRadius:12, background:'rgba(255,255,255,.2)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                          <span className="material-symbols-rounded" style={{ fontSize:22, color:'white', fontVariationSettings:"'FILL' 1" }}>{typeIconsUI[draft.type]}</span>
+                        </div>
+                        <div>
+                          <div style={{ fontFamily:'var(--md-sys-font-heading)', fontSize:14, fontWeight:700, color:'white' }}>{uiTypeLabels[draft.type]}</div>
+                          <div style={{ fontSize:11, color:'rgba(255,255,255,.8)' }}>
+                            {profiles.find((p: any) => p.id === currentUserId)?.full_name || authUser?.user_metadata?.full_name || 'Tu'}
+                          </div>
+                        </div>
+                        <div style={{ marginLeft:'auto', background:'rgba(255,255,255,.2)', borderRadius:10, padding:'4px 10px', fontFamily:'var(--md-sys-font-heading)', fontSize:11, fontWeight:700, color:'white' }}>
+                          {draft.mode === 'create' ? 'In attesa' : 'Modifica'}
+                        </div>
+                      </div>
+
+                      {/* Rows */}
+                      <div style={{ background:'#F8FAFC' }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 16px', borderTop:'1px solid #f1f5f9' }}>
+                          <span className="material-symbols-rounded" style={{ fontSize:18, color:typeColors[draft.type], fontVariationSettings:"'FILL' 1", flexShrink:0 }}>calendar_today</span>
+                          <div style={{ fontSize:12, color:'var(--md-sys-color-on-surface)', fontWeight:500 }}>
+                            {isPermesso(draft.type)
+                              ? `${formatShortDate(draft.date)} • ${draft.time}`
+                              : `${formatShortDate(draft.startDate)} → ${formatShortDate(draft.endDate)}`}
+                          </div>
+                        </div>
+                        {!isPermesso(draft.type) && draft.startDate && draft.endDate && (
+                          <div style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 16px', borderTop:'1px solid #f1f5f9' }}>
+                            <span className="material-symbols-rounded" style={{ fontSize:18, color:'#f97316', fontVariationSettings:"'FILL' 1", flexShrink:0 }}>work_history</span>
+                            <div style={{ fontSize:12, color:'var(--md-sys-color-on-surface)', fontWeight:500 }}>
+                              {countWorkdays(draft.startDate, draft.endDate)} giorni lavorativi
+                            </div>
+                          </div>
+                        )}
+                        {isPermesso(draft.type) && (
+                          <div style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 16px', borderTop:'1px solid #f1f5f9' }}>
+                            <span className="material-symbols-rounded" style={{ fontSize:18, color:'var(--md-sys-color-on-surface-variant)', flexShrink:0 }}>schedule</span>
+                            <div style={{ fontSize:12, color:'var(--md-sys-color-on-surface)', fontWeight:500 }}>{draft.durationHours} ore</div>
+                          </div>
+                        )}
+                        <div style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 16px', borderTop:'1px solid #f1f5f9' }}>
+                          <span className="material-symbols-rounded" style={{ fontSize:18, color:'var(--md-sys-color-on-surface-variant)', flexShrink:0 }}>edit_note</span>
+                          <input
+                            style={{ flex:1, border:'none', background:'transparent', fontFamily:'inherit', fontSize:12, color:'var(--md-sys-color-on-surface-variant)', outline:'none' }}
+                            placeholder="Aggiungi una nota... (opzionale)"
+                            value={draft.note || ''}
+                            onChange={e => setDraft(v => v ? { ...v, note: e.target.value } : v)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div style={{ display:'flex', gap:8, marginBottom:8 }}>
+                      <button type="button"
+                        style={{ flex:2, padding:13, borderRadius:14, border:'none', background:'#00897b', color:'white', fontFamily:'var(--md-sys-font-heading)', fontSize:13, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}
+                        onClick={draft.mode === 'edit' ? onUpdate : onCreate}
+                      >
+                        <span className="material-symbols-rounded" style={{ fontSize:18, fontVariationSettings:"'FILL' 1" }}>check_circle</span>
+                        {draft.mode === 'edit' ? 'Aggiorna' : 'Conferma'}
+                      </button>
+                      <button type="button"
+                        style={{ flex:1, padding:13, borderRadius:14, border:'2px solid #e2e8f0', background:'transparent', color:'var(--md-sys-color-on-surface-variant)', fontFamily:'var(--md-sys-font-heading)', fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}
+                        onClick={() => setWizardStep(1)}
+                      >
+                        <span className="material-symbols-rounded" style={{ fontSize:16 }}>edit</span>
+                        Modifica
+                      </button>
+                    </div>
+                    {draft.mode === 'edit' && (
+                      <button type="button"
+                        style={{ width:'100%', padding:10, borderRadius:14, border:'1.5px solid #fecaca', background:'#fff5f5', color:'#ef4444', fontFamily:'inherit', fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}
+                        onClick={onDelete}
+                      >
+                        <span className="material-symbols-rounded" style={{ fontSize:16 }}>delete</span>
+                        Elimina evento
+                      </button>
+                    )}
+                  </>
+                )}
+
               </div>
             </div>
           </dialog>
