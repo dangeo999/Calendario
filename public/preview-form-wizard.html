@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preview: 3-Step Wizard — Calendario Geoconsult</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --primary: #2563EB;
+  --primary-light: #DBEAFE;
+  --surface: #F8FAFC;
+  --outline: #DBEAFE;
+  --text-primary: #0F172A;
+  --text-secondary: #64748B;
+  --fab: #F97316;
+  --white: #ffffff;
+  --ferie: #e53935;
+  --smart: #00897b;
+  --perm-e: #1e88e5;
+  --perm-u: #5e35b1;
+  --malattia: #212121;
+  --studio: #f9a825;
+}
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  background: linear-gradient(135deg, #0f172a 0%, #1a2744 50%, #0f172a 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 60px 20px 40px;
+  gap: 48px;
+}
+
+.page-label {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.8);
+  letter-spacing: 0.05em;
+  z-index: 100;
+  white-space: nowrap;
+}
+
+/* ─── Steps column ─── */
+.steps-column {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  align-items: center;
+}
+
+.step-wrapper {
+  width: 380px;
+  position: relative;
+}
+
+.step-connector {
+  width: 2px;
+  height: 20px;
+  background: rgba(37,99,235,0.3);
+  margin: 0 auto;
+}
+
+/* ─── Bottom sheet shell ─── */
+.bottom-sheet {
+  background: white;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 -4px 60px rgba(0,0,0,0.4);
+  position: relative;
+}
+
+/* Drag handle */
+.drag-handle {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 8px;
+  background: white;
+}
+
+.drag-handle::after {
+  content: '';
+  width: 36px;
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  display: block;
+}
+
+/* ─── Step indicator ─── */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px 16px;
+  gap: 0;
+}
+
+.step-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.step-dot.active {
+  background: var(--primary);
+  width: 28px;
+  border-radius: 5px;
+}
+
+.step-dot.done {
+  background: #86efac;
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  background: #e2e8f0;
+  max-width: 40px;
+  margin: 0 6px;
+}
+
+.step-line.done { background: #86efac; }
+
+.step-label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 4px;
+}
+
+.step-indicator-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.step-header-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 20px 4px;
+}
+
+.step-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.step-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.step-close .material-symbols-rounded { font-size: 18px; }
+
+/* ─── STEP 1: Tipo ─── */
+.step-content { padding: 12px 20px 20px; }
+
+.type-buttons-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.type-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 2px solid var(--outline);
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.type-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--btn-color);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.type-btn:hover::before { opacity: 0.06; }
+
+.type-btn.selected::before { opacity: 1; }
+.type-btn.selected { border-color: var(--btn-color); }
+
+.type-btn-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--btn-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  transition: background 0.2s;
+}
+
+.type-btn.selected .type-btn-icon {
+  background: rgba(255,255,255,0.25);
+}
+
+.type-btn-icon .material-symbols-rounded {
+  font-size: 18px;
+  color: white;
+}
+
+.type-btn-label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  position: relative;
+  z-index: 1;
+  transition: color 0.2s;
+  line-height: 1.2;
+}
+
+.type-btn.selected .type-btn-label { color: white; }
+
+.type-btn[data-t="ferie"] { --btn-color: var(--ferie); }
+.type-btn[data-t="smart"] { --btn-color: var(--smart); }
+.type-btn[data-t="perm-e"] { --btn-color: var(--perm-e); }
+.type-btn[data-t="perm-u"] { --btn-color: var(--perm-u); }
+.type-btn[data-t="malattia"] { --btn-color: var(--malattia); }
+.type-btn[data-t="studio"] { --btn-color: var(--studio); }
+
+/* ─── STEP 2: Date ─── */
+.type-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.type-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px 5px 8px;
+  border-radius: 20px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.type-badge-pill .material-symbols-rounded { font-size: 15px; }
+
+.mini-calendar {
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.mini-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.mini-cal-month {
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.mini-cal-nav {
+  display: flex;
+  gap: 2px;
+}
+
+.cal-nav-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: background 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.cal-nav-btn:hover { background: var(--primary-light); }
+.cal-nav-btn .material-symbols-rounded { font-size: 16px; }
+
+.mini-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.mini-cal-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 3px 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+.mini-cal-day {
+  font-size: 11px;
+  text-align: center;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.mini-cal-day:hover { background: var(--primary-light); }
+.mini-cal-day.today { font-weight: 700; color: var(--primary); }
+.mini-cal-day.selected-start,
+.mini-cal-day.selected-end {
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  font-weight: 700;
+}
+
+.mini-cal-day.in-range {
+  background: var(--primary-light);
+  border-radius: 0;
+  color: var(--primary);
+}
+
+.mini-cal-day.weekend { color: #94a3b8; }
+.mini-cal-day.empty { background: none; cursor: default; }
+
+.date-summary-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.date-chip {
+  background: white;
+  border: 2px solid var(--outline);
+  border-radius: 10px;
+  padding: 8px 12px;
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.date-chip small {
+  display: block;
+  font-size: 9px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.date-arrow .material-symbols-rounded {
+  font-size: 18px;
+  color: var(--text-secondary);
+}
+
+.days-counter-badge {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.days-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: #fed7aa;
+  color: #9a3412;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.days-counter .material-symbols-rounded { font-size: 14px; }
+
+.btn-avanti {
+  width: 100%;
+  padding: 13px;
+  border-radius: 14px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-avanti:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.btn-avanti .material-symbols-rounded { font-size: 18px; }
+
+/* ─── STEP 3: Riepilogo ─── */
+.summary-card {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid var(--outline);
+  margin-bottom: 16px;
+}
+
+.summary-card-header {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.summary-type-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.summary-type-icon .material-symbols-rounded {
+  font-size: 22px;
+  color: white;
+}
+
+.summary-type-info h3 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.summary-type-info small {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.summary-rows {
+  background: var(--surface);
+}
+
+.summary-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.summary-row .material-symbols-rounded {
+  font-size: 18px;
+  color: var(--text-secondary);
+}
+
+.summary-row-text {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 12px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.note-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 12px;
+  color: var(--text-secondary);
+  outline: none;
+  resize: none;
+}
+
+.note-input::placeholder { color: #94a3b8; }
+
+.summary-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-confirm {
+  flex: 2;
+  padding: 13px;
+  border-radius: 14px;
+  border: none;
+  background: #00897b;
+  color: white;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-confirm:hover { filter: brightness(1.08); }
+.btn-confirm .material-symbols-rounded { font-size: 18px; }
+
+.btn-modifica {
+  flex: 1;
+  padding: 13px;
+  border-radius: 14px;
+  border: 2px solid #e2e8f0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-modifica:hover { background: #f1f5f9; }
+.btn-modifica .material-symbols-rounded { font-size: 16px; }
+
+/* ─── Step labels outside ─── */
+.step-outer-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.step-number-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.step-number-badge.done {
+  background: #22c55e;
+}
+
+.step-outer-label span {
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.8);
+}
+
+/* ─── Info panel ─── */
+.info-panel {
+  width: 300px;
+  flex-shrink: 0;
+  color: white;
+  padding-top: 8px;
+}
+
+.info-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(37,99,235,0.3);
+  border: 1px solid rgba(37,99,235,0.5);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #93c5fd;
+  margin-bottom: 16px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.info-badge .material-symbols-rounded { font-size: 14px; }
+
+.info-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 8px;
+  color: white;
+}
+
+.info-subtitle {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.ux-points { display: flex; flex-direction: column; gap: 14px; }
+
+.ux-point { display: flex; gap: 12px; align-items: flex-start; }
+
+.ux-point-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(37,99,235,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #60a5fa;
+}
+
+.ux-point-icon .material-symbols-rounded { font-size: 17px; }
+
+.ux-point-text h4 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 2px;
+}
+
+.ux-point-text p {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.5;
+}
+
+.divider { height: 1px; background: rgba(255,255,255,0.1); margin: 18px 0; }
+</style>
+</head>
+<body>
+
+<div class="page-label">CALENDARIO GEOCONSULT — Preview UX #2: 3-Step Wizard</div>
+
+<!-- Steps column -->
+<div class="steps-column">
+
+  <!-- STEP 1 -->
+  <div class="step-outer-label">
+    <div class="step-number-badge done">
+      <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1;font-size:14px">check</span>
+    </div>
+    <span>Step 1 — Seleziona il tipo</span>
+  </div>
+
+  <div class="step-wrapper">
+    <div class="bottom-sheet">
+      <div class="drag-handle"></div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px 4px;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div class="step-dot done"></div>
+          <div class="step-line done"></div>
+          <div class="step-dot done"></div>
+          <div class="step-line done"></div>
+          <div class="step-dot done"></div>
+        </div>
+        <button class="step-close"><span class="material-symbols-rounded">close</span></button>
+      </div>
+
+      <div class="step-header-area" style="padding-top:10px;">
+        <div class="step-title">Tipo di assenza</div>
+      </div>
+
+      <div class="step-content">
+        <div class="type-buttons-grid">
+          <div class="type-btn" data-t="ferie">
+            <div class="type-btn-icon">
+              <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">beach_access</span>
+            </div>
+            <span class="type-btn-label">Ferie</span>
+          </div>
+          <div class="type-btn selected" data-t="smart">
+            <div class="type-btn-icon">
+              <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">home_work</span>
+            </div>
+            <span class="type-btn-label">Smart Working</span>
+          </div>
+          <div class="type-btn" data-t="perm-e">
+            <div class="type-btn-icon">
+              <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">login</span>
+            </div>
+            <span class="type-btn-label">Perm. Entrata</span>
+          </div>
+          <div class="type-btn" data-t="perm-u">
+            <div class="type-btn-icon">
+              <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">logout</span>
+            </div>
+            <span class="type-btn-label">Perm. Uscita</span>
+          </div>
+          <div class="type-btn" data-t="malattia">
+            <div class="type-btn-icon">
+              <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">medical_services</span>
+            </div>
+            <span class="type-btn-label">Malattia</span>
+          </div>
+          <div class="type-btn" data-t="studio">
+            <div class="type-btn-icon">
+              <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">school</span>
+            </div>
+            <span class="type-btn-label">Perm. Studio</span>
+          </div>
+        </div>
+        <div style="margin-top:10px;text-align:center;">
+          <span style="font-family:'Open Sans',sans-serif;font-size:11px;color:var(--text-secondary);">
+            Seleziona un tipo → avanza automaticamente allo step 2
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step-connector"></div>
+
+  <!-- STEP 2 -->
+  <div class="step-outer-label">
+    <div class="step-number-badge">2</div>
+    <span>Step 2 — Seleziona le date</span>
+  </div>
+
+  <div class="step-wrapper">
+    <div class="bottom-sheet">
+      <div class="drag-handle"></div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px 4px;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div class="step-dot done"></div>
+          <div class="step-line done"></div>
+          <div class="step-dot active"></div>
+          <div class="step-line"></div>
+          <div class="step-dot"></div>
+        </div>
+        <button class="step-close"><span class="material-symbols-rounded">close</span></button>
+      </div>
+
+      <div class="step-header-area" style="padding-top:10px;">
+        <div class="step-title">Periodo</div>
+      </div>
+
+      <div class="step-content">
+        <div class="type-badge-row">
+          <div class="type-badge-pill" style="background:#00897b;">
+            <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">home_work</span>
+            Smart Working
+          </div>
+          <span style="font-family:'Open Sans',sans-serif;font-size:11px;color:var(--text-secondary);">selezionato</span>
+        </div>
+
+        <div class="mini-calendar">
+          <div class="mini-cal-header">
+            <span class="mini-cal-month">Aprile 2026</span>
+            <div class="mini-cal-nav">
+              <button class="cal-nav-btn">
+                <span class="material-symbols-rounded">chevron_left</span>
+              </button>
+              <button class="cal-nav-btn">
+                <span class="material-symbols-rounded">chevron_right</span>
+              </button>
+            </div>
+          </div>
+          <div class="mini-cal-grid">
+            <div class="mini-cal-label">L</div><div class="mini-cal-label">M</div><div class="mini-cal-label">M</div>
+            <div class="mini-cal-label">G</div><div class="mini-cal-label">V</div><div class="mini-cal-label">S</div>
+            <div class="mini-cal-label">D</div>
+            <!-- April 2026: starts Wednesday -->
+            <div class="mini-cal-day empty"></div><div class="mini-cal-day empty"></div>
+            <div class="mini-cal-day">1</div><div class="mini-cal-day">2</div>
+            <div class="mini-cal-day">3</div><div class="mini-cal-day weekend">4</div><div class="mini-cal-day weekend">5</div>
+            <div class="mini-cal-day">6</div><div class="mini-cal-day">7</div><div class="mini-cal-day">8</div>
+            <div class="mini-cal-day">9</div><div class="mini-cal-day">10</div>
+            <div class="mini-cal-day weekend">11</div><div class="mini-cal-day weekend">12</div>
+            <div class="mini-cal-day today">13</div>
+            <div class="mini-cal-day selected-start">14</div>
+            <div class="mini-cal-day in-range">15</div>
+            <div class="mini-cal-day in-range">16</div>
+            <div class="mini-cal-day selected-end">17</div>
+            <div class="mini-cal-day weekend">18</div><div class="mini-cal-day weekend">19</div>
+            <div class="mini-cal-day">20</div><div class="mini-cal-day">21</div>
+            <div class="mini-cal-day">22</div><div class="mini-cal-day">23</div>
+            <div class="mini-cal-day">24</div>
+            <div class="mini-cal-day weekend">25</div><div class="mini-cal-day weekend">26</div>
+            <div class="mini-cal-day">27</div><div class="mini-cal-day">28</div>
+            <div class="mini-cal-day">29</div><div class="mini-cal-day">30</div>
+          </div>
+        </div>
+
+        <div class="date-summary-row">
+          <div class="date-chip">
+            <small>DAL</small>
+            14 Apr
+          </div>
+          <div class="date-arrow">
+            <span class="material-symbols-rounded">arrow_forward</span>
+          </div>
+          <div class="date-chip">
+            <small>AL</small>
+            17 Apr
+          </div>
+        </div>
+
+        <div class="days-counter-badge">
+          <div class="days-counter">
+            <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">work_history</span>
+            4 giorni lavorativi
+          </div>
+        </div>
+
+        <button class="btn-avanti">
+          Avanti
+          <span class="material-symbols-rounded">arrow_forward</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="step-connector"></div>
+
+  <!-- STEP 3 -->
+  <div class="step-outer-label">
+    <div class="step-number-badge" style="background:var(--fab);">3</div>
+    <span>Step 3 — Riepilogo e conferma</span>
+  </div>
+
+  <div class="step-wrapper">
+    <div class="bottom-sheet">
+      <div class="drag-handle"></div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px 4px;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div class="step-dot done"></div>
+          <div class="step-line done"></div>
+          <div class="step-dot done"></div>
+          <div class="step-line done"></div>
+          <div class="step-dot active"></div>
+        </div>
+        <button class="step-close"><span class="material-symbols-rounded">close</span></button>
+      </div>
+
+      <div class="step-header-area" style="padding-top:10px;">
+        <div class="step-title">Conferma evento</div>
+      </div>
+
+      <div class="step-content">
+        <div class="summary-card" style="border-color: #b2dfdb;">
+          <div class="summary-card-header" style="background: linear-gradient(135deg, #00897b 0%, #00695c 100%);">
+            <div class="summary-type-icon" style="background: rgba(255,255,255,0.2);">
+              <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">home_work</span>
+            </div>
+            <div class="summary-type-info">
+              <h3 style="color:white;">Smart Working</h3>
+              <small style="color:rgba(255,255,255,0.75);">Dipendente: Mario Rossi</small>
+            </div>
+            <div style="margin-left:auto;">
+              <div style="background:rgba(255,255,255,0.2);border-radius:10px;padding:4px 10px;font-family:'Poppins',sans-serif;font-size:11px;font-weight:700;color:white;">In attesa</div>
+            </div>
+          </div>
+
+          <div class="summary-rows">
+            <div class="summary-row">
+              <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1;color:#00897b;">calendar_today</span>
+              <div>
+                <div class="summary-row-text">14 Aprile → 17 Aprile 2026</div>
+                <div style="font-size:10px;color:var(--text-secondary);font-family:'Open Sans',sans-serif;">Lun — Gio</div>
+              </div>
+            </div>
+            <div class="summary-row">
+              <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1;color:#f97316;">work_history</span>
+              <div class="summary-row-text">4 giorni lavorativi</div>
+            </div>
+            <div class="summary-row">
+              <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">edit_note</span>
+              <input class="note-input" placeholder="Aggiungi una nota... (opzionale)">
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-actions">
+          <button class="btn-confirm">
+            <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">check_circle</span>
+            Conferma
+          </button>
+          <button class="btn-modifica">
+            <span class="material-symbols-rounded">edit</span>
+            Modifica
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Info panel -->
+<div class="info-panel">
+  <div class="info-badge">
+    <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">auto_awesome</span>
+    Design Concept #2
+  </div>
+  <h1 class="info-title">3-Step<br>Guided Wizard</h1>
+  <p class="info-subtitle">Il flusso lineare elimina la cognitive overload: una sola decisione alla volta, progressione visiva chiara, nessun dettaglio nascosto.</p>
+
+  <div class="ux-points">
+    <div class="ux-point">
+      <div class="ux-point-icon">
+        <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">linear_scale</span>
+      </div>
+      <div class="ux-point-text">
+        <h4>Progressione lineare guidata</h4>
+        <p>Step indicator sempre visibile riduce l'ansia da form. L'utente sa sempre dove si trova e quanti passi mancano.</p>
+      </div>
+    </div>
+    <div class="ux-point">
+      <div class="ux-point-icon">
+        <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">touch_app</span>
+      </div>
+      <div class="ux-point-text">
+        <h4>Auto-avanzamento allo Step 1</h4>
+        <p>Click sul tipo → il wizard avanza automaticamente. Nessun bottone "Avanti" da cercare, flusso percepito più veloce.</p>
+      </div>
+    </div>
+    <div class="ux-point">
+      <div class="ux-point-icon">
+        <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">date_range</span>
+      </div>
+      <div class="ux-point-text">
+        <h4>Calendario inline nello Step 2</h4>
+        <p>Il mini-calendar contestuale evita di aprire un picker separato. Selezione range diretta, più naturale su mobile.</p>
+      </div>
+    </div>
+    <div class="ux-point">
+      <div class="ux-point-icon">
+        <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">fact_check</span>
+      </div>
+      <div class="ux-point-text">
+        <h4>Riepilogo prima del submit</h4>
+        <p>Step 3 mostra tutto prima della conferma. Gli errori si scoprono prima dell'invio, riducendo richieste duplicate.</p>
+      </div>
+    </div>
+    <div class="ux-point">
+      <div class="ux-point-icon">
+        <span class="material-symbols-rounded" style="font-variation-settings:'FILL' 1">phone_iphone</span>
+      </div>
+      <div class="ux-point-text">
+        <h4>Bottom sheet nativo mobile</h4>
+        <p>Pattern familiare su Android/iOS. Swipe-down per chiudere, posizionamento ergonomico per il pollice.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.25);border-radius:14px;padding:14px;">
+    <div style="font-family:'Poppins',sans-serif;font-size:11px;font-weight:700;color:#fb923c;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em;">Flusso visualizzato</div>
+    <p style="font-family:'Open Sans',sans-serif;font-size:11px;color:rgba(255,255,255,0.6);line-height:1.5;">I 3 step sono mostrati in sequenza verticale per illustrare l'intero flusso utente. In produzione, ogni step sostituisce il precedente con animazione slide-up.</p>
+  </div>
+</div>
+
+<script>
+  // Step 1: type selection interaction
+  document.querySelectorAll('.type-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+      this.classList.add('selected');
+    });
+  });
+
+  // Calendar day selection
+  document.querySelectorAll('.mini-cal-day:not(.empty):not(.weekend)').forEach(day => {
+    day.addEventListener('click', function() {
+      // Simple toggle for demo
+      const days = document.querySelectorAll('.mini-cal-day');
+      days.forEach(d => {
+        d.classList.remove('selected-start', 'selected-end', 'in-range');
+      });
+      this.classList.add('selected-start');
+    });
+  });
+</script>
+</body>
+</html>

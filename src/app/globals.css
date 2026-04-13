@@ -839,6 +839,10 @@ dialog::backdrop{
     line-height: 1.4;
   }
 
+  /* Festività: ripristina display block per non spostare il numero */
+  .fc .fc-daygrid-day-number[data-holiday] {
+    display: block;
+  }
   /* Festività: testo non va fuori dalla cella */
   .fc .fc-daygrid-day-number[data-holiday]::after {
     font-size: 5.5px;
@@ -850,6 +854,7 @@ dialog::backdrop{
     line-height: 1.1;
     margin-top: 1px;
     letter-spacing: -.1px;
+    text-align: left;
   }
 
   /* ===== Evento: ultra-compatto stile Google Calendar ===== */
