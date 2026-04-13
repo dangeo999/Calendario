@@ -905,105 +905,89 @@ const handleSendMonthlyEmail = async () => {
 
       <div className="container">
         {/* Top App Bar (desktop) */}
-        <div className="appbar appbar--grid m-elev-2">
+        <div className="appbar appbar--bar m-elev-2">
 
-          {/* ── Colonna sinistra: logo + titolo + saldi ── */}
-          <div className="appbar__title-wrap">
+          {/* Brand */}
+          <div className="appbar__brand">
             <span className="material-symbols-rounded appbar__logo">calendar_month</span>
-            <div className="appbar-title-group">
-              <div className="appbar__title">Calendario Geoconsult</div>
-              {myBalance && (
-                <div className="appbar-balances">
-                  <span className="legend__pill legend__pill--stat">
-                    <i className="dot dot--ferie" />
-                    <span className="mono">{myBalance.ferie.toFixed(1)}</span>&nbsp;gg ferie
-                  </span>
-                  <span className="legend__pill legend__pill--stat">
-                    <i className="dot dot--entrata" />
-                    <span className="mono">{myBalance.perm.toFixed(1)}</span>&nbsp;h perm.
-                  </span>
-                </div>
-              )}
-            </div>
+            <span className="appbar__title">Calendario Geoconsult</span>
           </div>
 
-          {/* ── Colonna destra ── */}
-          <div className="appbar__right">
-
-            {/* Riga superiore: utente + logout */}
-            <div className="appbar__row appbar__row--top" style={{ justifyContent: 'flex-end' }}>
-              {currentUserId && (
-                <div className="user-chip">
-                  <div className="user-chip__ava">
-                    {initialsOf(profiles.find((p: any) => p.id === currentUserId)?.full_name
-                      || authUser?.user_metadata?.full_name || authUser?.email)}
-                  </div>
-                  <span className="user-chip__name">
-                    {profiles.find((p: any) => p.id === currentUserId)?.full_name
-                      || authUser?.user_metadata?.full_name
-                      || authUser?.email
-                      || 'Utente'}
-                  </span>
-                </div>
-              )}
-              <button
-                className="m-btn m-btn--tonal"
-                title="Esci"
-                onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login' }}
-              >
-                <span className="material-symbols-rounded">logout</span>
-              </button>
+          {/* Saldi */}
+          {myBalance && (
+            <div className="appbar__balances">
+              <span className="legend__pill legend__pill--stat">
+                <i className="dot dot--ferie" />
+                <span className="mono">{myBalance.ferie.toFixed(1)}</span>&nbsp;gg
+              </span>
+              <span className="legend__pill legend__pill--stat">
+                <i className="dot dot--entrata" />
+                <span className="mono">{myBalance.perm.toFixed(1)}</span>&nbsp;h
+              </span>
             </div>
+          )}
 
-            {/* Riga inferiore: navigazione + filtri + email */}
-            <div className="appbar__row appbar__row--bottom">
-              <div className="segmented">
-                <button className="segmented__btn" onClick={gotoPrev}>
-                  <span className="material-symbols-rounded">chevron_left</span>
-                </button>
-                <div className="cal-month-label">
-                  {format(viewDate, 'MMMM yyyy', { locale: it })}
-                </div>
-                <button className="segmented__btn" onClick={gotoToday}>oggi</button>
-                <button className="segmented__btn" onClick={gotoNext}>
-                  <span className="material-symbols-rounded">chevron_right</span>
-                </button>
+          <div className="appbar__sep" />
+
+          {/* Navigazione mese */}
+          <div className="segmented">
+            <button className="segmented__btn" onClick={gotoPrev}>
+              <span className="material-symbols-rounded">chevron_left</span>
+            </button>
+            <div className="cal-month-label">{format(viewDate, 'MMMM yyyy', { locale: it })}</div>
+            <button className="segmented__btn" onClick={gotoToday}>oggi</button>
+            <button className="segmented__btn" onClick={gotoNext}>
+              <span className="material-symbols-rounded">chevron_right</span>
+            </button>
+          </div>
+
+          <div style={{ flex: 1 }} />
+
+          {/* Filtri */}
+          <select className="m-field appbar__select" value={filterUser} onChange={e => setFilterUser(e.target.value)}>
+            <option value="ALL">Tutti gli utenti</option>
+            {profiles.map((p: any) => (
+              <option value={p.id} key={p.id}>{p.full_name || p.id.slice(0, 6)}</option>
+            ))}
+          </select>
+
+          <select className="m-field appbar__select" value={filterType} onChange={e => setFilterType(e.target.value as 'ALL' | DbType)}>
+            <option value="ALL">Tutti i tipi</option>
+            {(['FERIE', 'SMART_WORKING', 'PERMESSO_ENTRATA_ANTICIPATA', 'PERMESSO_USCITA_ANTICIPATA', 'MALATTIA', 'PERMESSO_STUDIO'] as DbType[]).map(t => (
+              <option key={t} value={t}>{labelOfType(t)}</option>
+            ))}
+          </select>
+
+          {isBoss && (
+            <button className="m-btn m-btn--tonal" onClick={handleSendMonthlyEmail} disabled={sendingMail} title="Invia riepilogo mensile">
+              <span className="material-symbols-rounded">{sendingMail ? 'hourglass_top' : 'send'}</span>
+            </button>
+          )}
+
+          <div className="appbar__sep" />
+
+          {/* Utente */}
+          {currentUserId && (
+            <div className="user-chip">
+              <div className="user-chip__ava">
+                {initialsOf(profiles.find((p: any) => p.id === currentUserId)?.full_name
+                  || authUser?.user_metadata?.full_name || authUser?.email)}
               </div>
-
-              <select className="m-field" value={filterUser} onChange={e => setFilterUser(e.target.value)}>
-                <option value="ALL">Tutti gli utenti</option>
-                {profiles.map((p: any) => (
-                  <option value={p.id} key={p.id}>{p.full_name || p.id.slice(0, 6)}</option>
-                ))}
-              </select>
-
-              <select
-                className="m-field"
-                value={filterType}
-                onChange={e => setFilterType(e.target.value as 'ALL' | DbType)}
-              >
-                <option value="ALL">Tutti i tipi</option>
-                {(['FERIE', 'SMART_WORKING', 'PERMESSO_ENTRATA_ANTICIPATA', 'PERMESSO_USCITA_ANTICIPATA', 'MALATTIA', 'PERMESSO_STUDIO'] as DbType[]).map(t => (
-                  <option key={t} value={t}>{labelOfType(t)}</option>
-                ))}
-              </select>
-
-              {isBoss && (
-                <button
-                  className="m-btn m-btn--filled"
-                  onClick={handleSendMonthlyEmail}
-                  disabled={sendingMail}
-                  title="Invia il riepilogo del mese corrente via email"
-                >
-                  <span className="material-symbols-rounded">
-                    {sendingMail ? 'hourglass_top' : 'send'}
-                  </span>
-                  {sendingMail ? 'Invio…' : 'Invia riepilogo'}
-                </button>
-              )}
+              <span className="user-chip__name">
+                {profiles.find((p: any) => p.id === currentUserId)?.full_name
+                  || authUser?.user_metadata?.full_name
+                  || authUser?.email
+                  || 'Utente'}
+              </span>
             </div>
+          )}
 
-          </div>
+          <button className="m-btn m-btn--tonal appbar__logout" title="Esci"
+            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login' }}
+          >
+            <span className="material-symbols-rounded">logout</span>
+          </button>
+
         </div>
 
         <div className="card m-elev-1">

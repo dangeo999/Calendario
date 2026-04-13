@@ -841,14 +841,15 @@ dialog::backdrop{
 
   /* Festività: testo non va fuori dalla cella */
   .fc .fc-daygrid-day-number[data-holiday]::after {
-    font-size: 6.5px;
-    max-width: 100%;
+    font-size: 5.5px;
+    max-width: 26px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     display: block;
-    line-height: 1.2;
+    line-height: 1.1;
     margin-top: 1px;
+    letter-spacing: -.1px;
   }
 
   /* ===== Evento: ultra-compatto stile Google Calendar ===== */
@@ -913,11 +914,11 @@ dialog::backdrop{
   /* Card riepilogo in versione mobile pulita */
   .summary-card{
     background: #fff;
-    border: none;
-    border-bottom: 1px solid var(--md-sys-color-outline);
-    border-radius: 0;
-    padding: 14px 16px 12px;
-    box-shadow: none;
+    border: none !important;
+    border-bottom: 1px solid var(--md-sys-color-outline) !important;
+    border-radius: 0 !important;
+    padding: 14px 20px 12px !important;
+    box-shadow: none !important;
   }
   .summary-card .panel__header{
     background:transparent; border:none; box-shadow:none;
@@ -1025,19 +1026,48 @@ dialog::backdrop{
   .table-wrap { display:none !important; }
 }
 
-/* ===== AppBar grid layout (desktop) ===== */
-.appbar--grid {
-  display: grid;
-  grid-template-columns: auto 1fr;
+/* ===== AppBar bar layout (desktop) ===== */
+.appbar--bar {
+  display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
+  padding: 8px 14px;
+  flex-wrap: nowrap;
 }
-.appbar-title-group { display: flex; flex-direction: column; gap: 5px; }
-.appbar-balances   { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-
+.appbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.appbar__balances {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.appbar__sep {
+  width: 1px;
+  height: 22px;
+  background: var(--md-sys-color-outline);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+.appbar__select {
+  height: 34px;
+  padding: 0 8px;
+  font-size: .85rem;
+  max-width: 150px;
+}
+.appbar__logout {
+  width: 36px; height: 36px; padding: 0;
+  display: grid; place-items: center; flex-shrink: 0;
+}
+@media (max-width: 1100px) {
+  .appbar__balances { display: none; }
+}
 @media (max-width: 900px) {
-  .appbar--grid { grid-template-columns: 1fr; }
-  .appbar__right { grid-column: 1 !important; grid-row: auto !important; align-items: flex-start; }
+  .appbar--bar { display: none !important; }
 }
 
 /* ===== User chip (appbar) ===== */
