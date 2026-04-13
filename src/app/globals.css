@@ -309,8 +309,8 @@ dialog.modal{ border:none; padding:0; background:transparent; align-self: center
   font-size: 14px !important;
   font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 20;
   flex-shrink: 0;
-  opacity: .92;
   line-height: 1;
+  color: var(--evt-col, currentColor);
 }
 .m-event__type{ font-size:.6rem; opacity:.7; white-space:nowrap; }
 
@@ -525,20 +525,80 @@ dialog::backdrop{
 }
 /* Leggenda tra riepilogo e calendario */
 .calendar-legend{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  flex-wrap:wrap;
-
-  /* allineo alla stessa linea della griglia del calendario */
-  padding:3px 2px 0px;
-  border-top:1px solid var(--md-sys-color-outline);
-  background: color-mix(in srgb, var(--md-sys-color-surface-1) 98%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 4px 20px;
+  border-top: 1px solid var(--md-sys-color-outline);
+  background: color-mix(in srgb, var(--md-sys-color-surface-2) 60%, var(--md-sys-color-surface-1));
 }
-/* (opzionale) pill leggermente più compatti qui sotto */
-.calendar-legend .legend__pill{
-  padding:3px 9px;
-  line-height:1.1;
+.calendar-legend__title{
+  font-family: var(--md-sys-font-heading);
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--md-sys-color-on-surface-variant);
+  padding: 0 2px;
+}
+.calendar-legend__grid{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Pill icona-legenda */
+.leg-pill{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px 6px 10px;
+  border-radius: 999px;
+  font-size: .8rem;
+  font-weight: 600;
+  border: 1.5px solid;
+  transition: transform .12s ease, box-shadow .12s ease;
+  cursor: default;
+}
+.leg-pill:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.10);
+}
+.leg-icon{
+  font-size: 16px !important;
+  font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 20;
+  line-height: 1;
+}
+/* Colori per tipo */
+.leg-pill--ferie{
+  background: color-mix(in srgb, var(--evt-ferie) 9%, #fff);
+  border-color: color-mix(in srgb, var(--evt-ferie) 35%, transparent);
+  color: color-mix(in srgb, var(--evt-ferie) 85%, #111);
+}
+.leg-pill--smart{
+  background: color-mix(in srgb, var(--evt-smart) 9%, #fff);
+  border-color: color-mix(in srgb, var(--evt-smart) 35%, transparent);
+  color: color-mix(in srgb, var(--evt-smart) 85%, #111);
+}
+.leg-pill--entrata{
+  background: color-mix(in srgb, var(--evt-entrata) 9%, #fff);
+  border-color: color-mix(in srgb, var(--evt-entrata) 35%, transparent);
+  color: color-mix(in srgb, var(--evt-entrata) 85%, #111);
+}
+.leg-pill--uscita{
+  background: color-mix(in srgb, var(--evt-uscita) 9%, #fff);
+  border-color: color-mix(in srgb, var(--evt-uscita) 35%, transparent);
+  color: color-mix(in srgb, var(--evt-uscita) 85%, #111);
+}
+.leg-pill--malattia{
+  background: color-mix(in srgb, var(--evt-malattia) 7%, #fff);
+  border-color: color-mix(in srgb, var(--evt-malattia) 30%, transparent);
+  color: #333;
+}
+.leg-pill--studio{
+  background: color-mix(in srgb, var(--evt-studio) 9%, #fff);
+  border-color: color-mix(in srgb, var(--evt-studio) 35%, transparent);
+  color: color-mix(in srgb, var(--evt-studio) 85%, #111);
 }
 
 /* stringo le ultime due colonne e allineo a destra i numeri */
@@ -816,9 +876,8 @@ dialog::backdrop{
     overflow: hidden;
   }
   .m-event__icon {
-    font-size: 10px !important;
+    font-size: 11px !important;
     flex-shrink: 0;
-    opacity: .85;
   }
   .m-event__title {
     font-size: .58rem !important;

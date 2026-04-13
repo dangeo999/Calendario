@@ -989,13 +989,32 @@ const handleSendMonthlyEmail = async () => {
 
           {/* LEGENDA */}
           <div className="calendar-legend">
-            <div className="legend legend--compact legend--sm">
-              <span className="legend__pill"><i className="dot dot--ferie" />Ferie</span>
-              <span className="legend__pill"><i className="dot dot--smart" />Smart working</span>
-              <span className="legend__pill"><i className="dot dot--entrata" />Permesso entrata</span>
-              <span className="legend__pill"><i className="dot dot--uscita" />Permesso uscita</span>
-              <span className="legend__pill"><i className="dot dot--malattia" />Malattia</span>
-              <span className="legend__pill"><i className="dot dot--studio" />Permesso studio</span>
+            <div className="calendar-legend__title">Legenda</div>
+            <div className="calendar-legend__grid">
+              <span className="leg-pill leg-pill--ferie">
+                <span className="material-symbols-rounded leg-icon">beach_access</span>
+                Ferie
+              </span>
+              <span className="leg-pill leg-pill--smart">
+                <span className="material-symbols-rounded leg-icon">home_work</span>
+                Smart working
+              </span>
+              <span className="leg-pill leg-pill--entrata">
+                <span className="material-symbols-rounded leg-icon">login</span>
+                Permesso entrata
+              </span>
+              <span className="leg-pill leg-pill--uscita">
+                <span className="material-symbols-rounded leg-icon">logout</span>
+                Permesso uscita
+              </span>
+              <span className="leg-pill leg-pill--malattia">
+                <span className="material-symbols-rounded leg-icon">medical_services</span>
+                Malattia
+              </span>
+              <span className="leg-pill leg-pill--studio">
+                <span className="material-symbols-rounded leg-icon">school</span>
+                Permesso studio
+              </span>
             </div>
           </div>
         </div>
