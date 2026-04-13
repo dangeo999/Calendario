@@ -913,24 +913,8 @@ const handleSendMonthlyEmail = async () => {
             <span className="appbar__title">Calendario Geoconsult</span>
           </div>
 
-          {/* Saldi */}
-          {myBalance && (
-            <div className="appbar__balances">
-              <span className="legend__pill legend__pill--stat">
-                <i className="dot dot--ferie" />
-                <span className="mono">{myBalance.ferie.toFixed(1)}</span>&nbsp;gg
-              </span>
-              <span className="legend__pill legend__pill--stat">
-                <i className="dot dot--entrata" />
-                <span className="mono">{myBalance.perm.toFixed(1)}</span>&nbsp;h
-              </span>
-            </div>
-          )}
-
-          <div className="appbar__sep" />
-
           {/* Navigazione mese */}
-          <div className="segmented">
+          <div className="segmented" style={{ marginLeft: 8 }}>
             <button className="segmented__btn" onClick={gotoPrev}>
               <span className="material-symbols-rounded">chevron_left</span>
             </button>
@@ -959,34 +943,33 @@ const handleSendMonthlyEmail = async () => {
           </select>
 
           {isBoss && (
-            <button className="m-btn m-btn--tonal" onClick={handleSendMonthlyEmail} disabled={sendingMail} title="Invia riepilogo mensile">
+            <button className="m-btn m-btn--tonal appbar__icon-btn" onClick={handleSendMonthlyEmail} disabled={sendingMail} title="Invia riepilogo mensile">
               <span className="material-symbols-rounded">{sendingMail ? 'hourglass_top' : 'send'}</span>
             </button>
           )}
 
-          <div className="appbar__sep" />
-
-          {/* Utente */}
-          {currentUserId && (
-            <div className="user-chip">
-              <div className="user-chip__ava">
-                {initialsOf(profiles.find((p: any) => p.id === currentUserId)?.full_name
-                  || authUser?.user_metadata?.full_name || authUser?.email)}
+          {/* Utente + logout */}
+          <div className="appbar__user-group">
+            {currentUserId && (
+              <div className="user-chip">
+                <div className="user-chip__ava">
+                  {initialsOf(profiles.find((p: any) => p.id === currentUserId)?.full_name
+                    || authUser?.user_metadata?.full_name || authUser?.email)}
+                </div>
+                <span className="user-chip__name">
+                  {profiles.find((p: any) => p.id === currentUserId)?.full_name
+                    || authUser?.user_metadata?.full_name
+                    || authUser?.email
+                    || 'Utente'}
+                </span>
               </div>
-              <span className="user-chip__name">
-                {profiles.find((p: any) => p.id === currentUserId)?.full_name
-                  || authUser?.user_metadata?.full_name
-                  || authUser?.email
-                  || 'Utente'}
-              </span>
-            </div>
-          )}
-
-          <button className="m-btn m-btn--tonal appbar__logout" title="Esci"
-            onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login' }}
-          >
-            <span className="material-symbols-rounded">logout</span>
-          </button>
+            )}
+            <button className="appbar__icon-btn appbar__icon-btn--outline" title="Esci"
+              onClick={async () => { await supabase.auth.signOut(); window.location.href = '/login' }}
+            >
+              <span className="material-symbols-rounded">logout</span>
+            </button>
+          </div>
 
         </div>
 
