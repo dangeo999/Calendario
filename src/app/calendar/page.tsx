@@ -551,16 +551,26 @@ export default function CalendarPage() {
   const gotoNext = () => calRef.current?.getApi().next()
   const gotoToday = () => calRef.current?.getApi().today()
 
+  // Icon mapping per tipo evento
+  const iconOfType: Record<DbType, string> = {
+    FERIE:                       'beach_access',
+    SMART_WORKING:               'home_work',
+    PERMESSO_ENTRATA_ANTICIPATA: 'login',
+    PERMESSO_USCITA_ANTICIPATA:  'logout',
+    MALATTIA:                    'medical_services',
+    PERMESSO_STUDIO:             'school',
+  }
+
   // Event rendering
   const renderEvent = (arg: EventContentArg) => {
     const typeDb = (arg.event.extendedProps as any).type as DbType
+    const icon = iconOfType[typeDb] ?? 'event'
     return (
       <div className="m-event">
         <div className="m-event__title">
-          <span className="m-event__dot" />
-          <span>{arg.event.title}</span>
+          <span className="material-symbols-rounded m-event__icon">{icon}</span>
+          <span className="m-event__name">{arg.event.title}</span>
         </div>
-        {/*<div className="m-event__type">{labelOfType(typeDb)}</div>*/}
       </div>
     )
   }
