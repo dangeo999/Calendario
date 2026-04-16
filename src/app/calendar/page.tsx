@@ -161,6 +161,8 @@ export default function CalendarPage() {
   const [isMobile, setIsMobile] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1)
+  const [wizardDir, setWizardDir] = useState<'forward' | 'back'>('forward')
+  const [slideDir, setSlideDir] = useState<'prev' | 'next' | null>(null)
   const [miniCalDate, setMiniCalDate] = useState<Date>(new Date())
   const [rangePhase, setRangePhase] = useState<'start' | 'end'>('start')
 
@@ -562,9 +564,15 @@ export default function CalendarPage() {
   }
 
   // ---- UI helpers ----
-  const gotoPrev = () => calRef.current?.getApi().prev()
-  const gotoNext = () => calRef.current?.getApi().next()
-  const gotoToday = () => calRef.current?.getApi().today()
+  const gotoPrev = () => { setSlideDir('prev'); calRef.current?.getApi().prev() }
+  const gotoNext = () => { setSlideDir('next'); calRef.current?.getApi().next() }
+  const gotoToday = () => { setSlideDir('next'); calRef.current?.getApi().today() }
+
+  // Wizard step con direzione animazione
+  const goStep = (n: 1 | 2 | 3, dir: 'forward' | 'back' = 'forward') => {
+    setWizardDir(dir)
+    setWizardStep(n)
+  }
 
   // Icon mapping per tipo evento
   const iconOfType: Record<DbType, string> = {
@@ -977,6 +985,10 @@ const handleSendMonthlyEmail = async () => {
           {/* RIEPILOGO INLINE (desktop + mobile) */}
           {(!isMobile || showSummarySheet) && renderSummary()}
 
+          <div
+            className={`cal-wrap${slideDir === 'next' ? ' cal-slide-next' : slideDir === 'prev' ? ' cal-slide-prev' : ''}`}
+            onAnimationEnd={() => setSlideDir(null)}
+          >
           <FullCalendar
             ref={calRef}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -1021,7 +1033,7 @@ const handleSendMonthlyEmail = async () => {
             }}
             events={eventsForCalendar}
             eventContent={renderEvent}
-            datesSet={(arg) => setViewDate(arg.view.calendar.getDate())}
+            datesSet={(arg) => { setViewDate(arg.view.calendar.getDate()) }}
             dayCellClassNames={(arg) => {
               const classes: string[] = []
               if (arg.isOther) return classes
@@ -1054,6 +1066,7 @@ const handleSendMonthlyEmail = async () => {
               }
             }}
           />
+          </div>{/* /cal-wrap */}
 
           {/* LEGENDA */}
           <div className="calendar-legend">
@@ -1125,7 +1138,7 @@ const handleSendMonthlyEmail = async () => {
               </div>
 
               {/* ─── Step content ─── */}
-              <div style={{ padding:'10px 16px 20px' }}>
+              <div key={wizardStep} className={`wizard-step-anim--${wizardDir}`} style={{ padding:'10px 16px 20px' }}>
 
                 {/* ── STEP 1: Tipo ── */}
                 {wizardStep === 1 && (
@@ -1140,7 +1153,7 @@ const handleSendMonthlyEmail = async () => {
                           onClick={() => {
                             setDraft(v => v ? { ...v, type: t } : v)
                             setRangePhase('start')
-                            setWizardStep(2)
+                            goStep(2, 'forward')
                           }}
                           style={{
                             display:'flex', alignItems:'center', gap:10,
@@ -1168,7 +1181,7 @@ const handleSendMonthlyEmail = async () => {
                 {wizardStep === 2 && draft && (
                   <>
                     {/* Back */}
-                    <button type="button" onClick={() => setWizardStep(1)}
+                    <button type="button" onClick={() => goStep(1, 'back')}
                       style={{ display:'flex', alignItems:'center', gap:4, background:'transparent', border:'none', cursor:'pointer', color:'var(--md-sys-color-on-surface-variant)', fontSize:12, fontWeight:500, padding:'0 0 10px', fontFamily:'inherit' }}
                     >
                       <span className="material-symbols-rounded" style={{ fontSize:15 }}>arrow_back</span>
@@ -1290,7 +1303,7 @@ const handleSendMonthlyEmail = async () => {
 
                     <button type="button"
                       style={{ width:'100%', padding:13, borderRadius:14, border:'none', background:'var(--md-sys-color-primary)', color:'white', fontFamily:'var(--md-sys-font-heading)', fontSize:14, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}
-                      onClick={() => setWizardStep(3)}
+                      onClick={() => goStep(3, 'forward')}
                     >
                       Avanti
                       <span className="material-symbols-rounded" style={{ fontSize:18 }}>arrow_forward</span>
@@ -1366,7 +1379,7 @@ const handleSendMonthlyEmail = async () => {
                       </button>
                       <button type="button"
                         style={{ flex:1, padding:13, borderRadius:14, border:'2px solid #e2e8f0', background:'transparent', color:'var(--md-sys-color-on-surface-variant)', fontFamily:'var(--md-sys-font-heading)', fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}
-                        onClick={() => setWizardStep(1)}
+                        onClick={() => goStep(1, 'back')}
                       >
                         <span className="material-symbols-rounded" style={{ fontSize:16 }}>edit</span>
                         Modifica

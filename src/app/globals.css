@@ -1080,6 +1080,11 @@ dialog::backdrop{
 .appbar__icon-btn--outline:hover { background: var(--md-sys-color-surface-2); border-color: var(--md-sys-color-primary); }
 @media (max-width: 900px) {
   .appbar--bar { display: none !important; }
+  /* Tablet (641–900px): mostra appbar mobile, menu, FAB e filtri */
+  .mobile-appbar { display: grid; }
+  .mobile-menu--open { display: block; }
+  .fab { display: inline-flex; }
+  .sheet { display: block; }
 }
 
 /* ===== User chip (appbar) ===== */
@@ -1288,4 +1293,70 @@ dialog::backdrop{
   border-top: 2px solid var(--md-sys-color-outline);
   background: var(--md-sys-color-surface-2);
   text-align: center;
+}
+
+/* =====================================================
+   ANIMAZIONI
+   ===================================================== */
+
+/* 1 ── Navigazione mese: slide left / right */
+.cal-wrap { overflow: hidden; }
+
+@keyframes calSlideNext {
+  from { transform: translateX(52px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes calSlidePrev {
+  from { transform: translateX(-52px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+.cal-slide-next { animation: calSlideNext .28s cubic-bezier(.4,0,.2,1) both; }
+.cal-slide-prev { animation: calSlidePrev .28s cubic-bezier(.4,0,.2,1) both; }
+
+/* 2 ── Modal: fade+scale su desktop, slide-up su mobile */
+@keyframes modalFadeScale {
+  from { transform: scale(.96) translateY(10px); opacity: 0; }
+  to   { transform: scale(1)   translateY(0);    opacity: 1; }
+}
+@keyframes modalSlideUp {
+  from { transform: translateY(60%); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+dialog.modal .panel {
+  animation: modalFadeScale .24s cubic-bezier(.4,0,.2,1) both;
+}
+@media (max-width: 640px) {
+  dialog.modal .panel {
+    animation: modalSlideUp .32s cubic-bezier(.4,0,.2,1) both;
+  }
+}
+
+/* 3 ── Mobile menu dropdown */
+@keyframes menuSlideDown {
+  from { transform: translateY(-8px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.mobile-menu--open {
+  animation: menuSlideDown .18s cubic-bezier(.4,0,.2,1) both;
+}
+
+/* 4 ── Wizard: slide orizzontale tra step */
+@keyframes wizardForward {
+  from { transform: translateX(28px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes wizardBack {
+  from { transform: translateX(-28px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+.wizard-step-anim--forward { animation: wizardForward .22s cubic-bezier(.4,0,.2,1) both; }
+.wizard-step-anim--back    { animation: wizardBack    .22s cubic-bezier(.4,0,.2,1) both; }
+
+/* 5 ── Sheet filtri: slide-down */
+@keyframes sheetSlideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+.sheet {
+  animation: sheetSlideDown .2s cubic-bezier(.4,0,.2,1) both;
 }
