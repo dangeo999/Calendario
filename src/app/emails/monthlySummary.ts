@@ -71,44 +71,58 @@ function buildDaysByUser(
   const byUser: Record<string, Record<number, DayInfo>> = {}
   if (!events) return byUser
 
-  const monthStart = new Date(year, month - 1, 1)
-  const monthEnd = new Date(year, month, 1)
+  const fmt = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Rome',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+  const DAY_MS = 86400000
 
   for (const e of events) {
     if (!e.starts_at) continue
 
     const start = new Date(e.starts_at)
-    if (start < monthStart || start >= monthEnd) continue
+    const ends = e.ends_at ? new Date(e.ends_at) : new Date(start.getTime() + DAY_MS)
+    if (!(ends.getTime() > start.getTime())) continue
 
     const uid = e.user_id
-    if (!byUser[uid]) byUser[uid] = {}
-    const d = start.getDate()
-
-    if (!byUser[uid][d]) {
-      byUser[uid][d] = {
-        ferie: false,
-        malattia: false,
-        perm: false,
-        studio: false,
-        permHours: 0,
-        studioHours: 0,
-      }
-    }
-
-    const info = byUser[uid][d]
-    const t = e.type.toUpperCase()
+    const ty = e.type.toUpperCase()
     const h = Number(e.permesso_hours || 0)
 
-    if (t === 'FERIE') {
-      info.ferie = true
-    } else if (t === 'MALATTIA') {
-      info.malattia = true
-    } else if (t.indexOf('STUDIO') >= 0) {
-      info.studio = true
-      info.studioHours += h
-    } else if (t.indexOf('PERMESSO') >= 0 || t.indexOf('ENTRATA') >= 0 || t.indexOf('USCITA') >= 0) {
-      info.perm = true
-      info.permHours += h
+    for (let t = start.getTime(); t < ends.getTime(); t += DAY_MS) {
+      const parts = fmt.formatToParts(new Date(t))
+      const yy = Number(parts.find(p => p.type === 'year')!.value)
+      const mm = Number(parts.find(p => p.type === 'month')!.value)
+      const dd = Number(parts.find(p => p.type === 'day')!.value)
+
+      if (yy !== year || mm !== month) continue
+
+      if (!byUser[uid]) byUser[uid] = {}
+      if (!byUser[uid][dd]) {
+        byUser[uid][dd] = {
+          ferie: false,
+          malattia: false,
+          perm: false,
+          studio: false,
+          permHours: 0,
+          studioHours: 0,
+        }
+      }
+
+      const info = byUser[uid][dd]
+
+      if (ty === 'FERIE') {
+        info.ferie = true
+      } else if (ty === 'MALATTIA') {
+        info.malattia = true
+      } else if (ty.indexOf('STUDIO') >= 0) {
+        info.studio = true
+        info.studioHours += h
+      } else if (ty.indexOf('PERMESSO') >= 0 || ty.indexOf('ENTRATA') >= 0 || ty.indexOf('USCITA') >= 0) {
+        info.perm = true
+        info.permHours += h
+      }
     }
   }
 
