@@ -8,6 +8,7 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import itLocale from '@fullcalendar/core/locales/it'
 import { supabase } from '@/app/lib/supabaseClient'
+import { needsApproval, statusLabel, type ApprovalStatus } from '@/app/lib/approvals'
 import { format } from 'date-fns'
 import { it } from 'date-fns/locale'
 
@@ -39,6 +40,8 @@ type Draft = {
   startDate?: string
   endDate?: string
   durationHours?: number
+  status?: ApprovalStatus
+  userId?: string
 }
 
 // helper
@@ -153,6 +156,7 @@ export default function CalendarPage() {
   const [draft, setDraft] = useState<Draft | null>(null)
   const dlgRef = useRef<HTMLDialogElement>(null)
   const [sendingMail, setSendingMail] = useState(false)
+  const [approvalBusy, setApprovalBusy] = useState(false)
 
   const calRef = useRef<any>(null)
   const [showFiltersMobile, setShowFiltersMobile] = useState(false)
@@ -280,6 +284,7 @@ export default function CalendarPage() {
       filtered.map((e: any) => {
         const uiT = uiTypeOf(e.type as DbType)
         const allDay = !isPermesso(uiT)
+        const status: ApprovalStatus = (e.status as ApprovalStatus) ?? 'APPROVED'
         return {
           id: e.id,
           title: `${nameOf(e.user_id)}`,
@@ -290,8 +295,13 @@ export default function CalendarPage() {
             type: e.type as DbType,
             note: e.note ?? '',
             permesso_hours: e.permesso_hours ?? null,
+            status,
           },
-          classNames: [`evt-${(e.type as string).toLowerCase()}`],
+          classNames: [
+            `evt-${(e.type as string).toLowerCase()}`,
+            ...(status === 'PENDING' ? ['evt--pending'] : []),
+            ...(status === 'REJECTED' ? ['evt--rejected'] : []),
+          ],
         }
       }),
     [filtered, profiles, authUser]
@@ -427,6 +437,8 @@ export default function CalendarPage() {
     const id = e.id as string
     const { type, note } = e.extendedProps || {}
     const uiT = uiTypeOf(type as DbType)
+    const status = ((e.extendedProps as any)?.status ?? 'APPROVED') as ApprovalStatus
+    const ownerId = events.find((ev: any) => ev.id === id)?.user_id as string | undefined
 
     if (isPermesso(uiT)) {
       const start = new Date(e.start!)
@@ -440,6 +452,8 @@ export default function CalendarPage() {
         type: uiT,
         note: (note as string) ?? '',
         durationHours: Number(hours) || 1,
+        status,
+        userId: ownerId,
       })
     } else {
       const startInc = toDateInput(e.startStr)
@@ -452,6 +466,8 @@ export default function CalendarPage() {
         endDate: endInc,
         type: uiTypeOf(type as DbType),
         note: (note as string) ?? '',
+        status,
+        userId: ownerId,
       })
     }
 
@@ -459,6 +475,65 @@ export default function CalendarPage() {
     setRangePhase('start')
     setOpen(true)
     setTimeout(() => dlgRef.current?.showModal(), 0)
+  }
+
+  // ---------- APPROVAZIONI ----------
+  /** Chiede al server di notificare il responsabile. L'evento e' gia' salvato: qui non si blocca nulla. */
+  const requestApproval = async (eventId: string) => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+
+    try {
+      const res = await fetch('/api/approvals/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ eventId }),
+      })
+      const js = await res.json().catch(() => ({}))
+      if (!res.ok || !js.ok) {
+        alert(
+          'Richiesta salvata come "In attesa", ma la notifica al responsabile non e partita.\n\n' +
+          String(js?.error || `Errore ${res.status}`)
+        )
+      }
+    } catch (err: any) {
+      alert(
+        'Richiesta salvata come "In attesa", ma la notifica al responsabile non e partita.\n\n' +
+        String(err?.message || err)
+      )
+    }
+  }
+
+  /** Approvazione/rifiuto dall'app: fallback se la notifica non arriva. Solo admin. */
+  const decideFromApp = async (eventId: string, decision: 'APPROVED' | 'REJECTED') => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return alert('Devi essere loggato')
+
+    setApprovalBusy(true)
+    try {
+      const res = await fetch('/api/approvals/decide', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ eventId, decision }),
+      })
+      const js = await res.json().catch(() => ({}))
+      if (!res.ok || !js.ok) throw new Error(js?.error || `Errore ${res.status}`)
+
+      setDraft(v => (v ? { ...v, status: decision } : v))
+      await load()
+      await loadSummary()
+      dlgRef.current?.close()
+    } catch (err: any) {
+      alert(String(err?.message || err))
+    } finally {
+      setApprovalBusy(false)
+    }
   }
 
   const onCreate = async () => {
@@ -488,19 +563,27 @@ export default function CalendarPage() {
       ends_at = endLocal.toISOString()
     }
 
-    const { error } = await supabase.from('events').insert({
-      user_id: user.id,
-      type: typeForDb,
-      note: draft.note,
-      starts_at,
-      ends_at,
-      permesso_hours,
-    })
+    // status lo decide il trigger DB (enforce_event_approval), non il client.
+    const { data: created, error } = await supabase
+      .from('events')
+      .insert({
+        user_id: user.id,
+        type: typeForDb,
+        note: draft.note,
+        starts_at,
+        ends_at,
+        permesso_hours,
+      })
+      .select('id, status')
+      .single()
     if (error) { alert(error.message); return }
 
     dlgRef.current?.close()
     setOpen(false)
     setDraft(null)
+
+    if (created?.status === 'PENDING') await requestApproval(created.id)
+
     await load()
     await loadSummary()
   }
@@ -531,7 +614,9 @@ export default function CalendarPage() {
       permesso_hours = null
     }
 
-    const { error } = await supabase
+    // Se cambiano tipo/date/ore di un tipo soggetto ad approvazione, il trigger
+    // DB rimette lo stato a PENDING: qui rileggiamo lo status effettivo.
+    const { data: updated, error } = await supabase
       .from('events')
       .update({
         type: dbTypeOf(draft.type),
@@ -541,12 +626,17 @@ export default function CalendarPage() {
         permesso_hours,
       })
       .eq('id', draft.id)
+      .select('id, status')
+      .single()
 
     if (error) { alert(error.message); return }
 
     dlgRef.current?.close()
     setOpen(false)
     setDraft(null)
+
+    if (updated?.status === 'PENDING') await requestApproval(updated.id)
+
     await load()
     await loadSummary()
   }
@@ -652,12 +742,22 @@ export default function CalendarPage() {
   // Event rendering
   const renderEvent = (arg: EventContentArg) => {
     const typeDb = (arg.event.extendedProps as any).type as DbType
+    const status = ((arg.event.extendedProps as any).status ?? 'APPROVED') as ApprovalStatus
     const icon = iconOfType[typeDb] ?? 'event'
     return (
       <div className="m-event">
         <div className="m-event__title">
           <span className="material-symbols-rounded m-event__icon">{icon}</span>
           <span className="m-event__name">{arg.event.title}</span>
+          {status !== 'APPROVED' && (
+            <span
+              className="material-symbols-rounded m-event__status"
+              title={statusLabel(status)}
+              aria-label={statusLabel(status)}
+            >
+              {status === 'PENDING' ? 'hourglass_top' : 'block'}
+            </span>
+          )}
         </div>
       </div>
     )
@@ -1097,6 +1197,17 @@ const handleSendMonthlyEmail = async () => {
                 Permesso studio
               </span>
             </div>
+
+            <div className="calendar-legend__grid" style={{ marginTop: 8 }}>
+              <span className="leg-pill leg-status leg-status--pending">
+                <span className="material-symbols-rounded leg-icon">hourglass_top</span>
+                In attesa di approvazione
+              </span>
+              <span className="leg-pill leg-status leg-status--rejected">
+                <span className="material-symbols-rounded leg-icon">block</span>
+                Rifiutata
+              </span>
+            </div>
           </div>
         </div>
 
@@ -1328,7 +1439,9 @@ const handleSendMonthlyEmail = async () => {
                           </div>
                         </div>
                         <div style={{ marginLeft:'auto', background:'rgba(255,255,255,.2)', borderRadius:10, padding:'4px 10px', fontFamily:'var(--md-sys-font-heading)', fontSize:11, fontWeight:700, color:'white' }}>
-                          {draft.mode === 'create' ? 'In attesa' : 'Modifica'}
+                          {draft.mode === 'create'
+                            ? (needsApproval(dbTypeOf(draft.type)) ? 'Da approvare' : 'Immediato')
+                            : statusLabel(draft.status)}
                         </div>
                       </div>
 
@@ -1367,6 +1480,54 @@ const handleSendMonthlyEmail = async () => {
                         </div>
                       </div>
                     </div>
+
+                    {/* Banner approvazione */}
+                    {draft.mode === 'create' && needsApproval(dbTypeOf(draft.type)) && (
+                      <div style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'11px 14px', borderRadius:12, background:'#fffbeb', border:'1.5px solid #fde68a', marginBottom:14 }}>
+                        <span className="material-symbols-rounded" style={{ fontSize:18, color:'#b45309', flexShrink:0 }}>send</span>
+                        <div style={{ fontSize:12, lineHeight:1.45, color:'#92400e' }}>
+                          Alla conferma parte la richiesta di approvazione al responsabile.
+                          L’evento resta <b>in attesa</b> finche non viene approvato.
+                        </div>
+                      </div>
+                    )}
+
+                    {draft.mode === 'edit' && draft.status && draft.status !== 'APPROVED' && (
+                      <div style={{
+                        display:'flex', alignItems:'flex-start', gap:10, padding:'11px 14px', borderRadius:12, marginBottom:14,
+                        background: draft.status === 'PENDING' ? '#fffbeb' : '#fef2f2',
+                        border: `1.5px solid ${draft.status === 'PENDING' ? '#fde68a' : '#fecaca'}`,
+                      }}>
+                        <span className="material-symbols-rounded" style={{ fontSize:18, flexShrink:0, color: draft.status === 'PENDING' ? '#b45309' : '#b91c1c' }}>
+                          {draft.status === 'PENDING' ? 'hourglass_top' : 'block'}
+                        </span>
+                        <div style={{ fontSize:12, lineHeight:1.45, color: draft.status === 'PENDING' ? '#92400e' : '#991b1b' }}>
+                          {draft.status === 'PENDING'
+                            ? 'In attesa della decisione del responsabile. Non conteggiata nei saldi.'
+                            : 'Richiesta rifiutata dal responsabile. Non conteggiata nei saldi.'}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Decisione dall'app — fallback per il responsabile */}
+                    {isBoss && draft.mode === 'edit' && draft.status === 'PENDING' && draft.id && (
+                      <div style={{ display:'flex', gap:8, marginBottom:10 }}>
+                        <button type="button" disabled={approvalBusy}
+                          style={{ flex:1, padding:12, borderRadius:14, border:'none', background:'#059669', color:'white', fontFamily:'var(--md-sys-font-heading)', fontSize:13, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6, opacity: approvalBusy ? .6 : 1 }}
+                          onClick={() => decideFromApp(draft.id!, 'APPROVED')}
+                        >
+                          <span className="material-symbols-rounded" style={{ fontSize:17, fontVariationSettings:"'FILL' 1" }}>check_circle</span>
+                          Approva
+                        </button>
+                        <button type="button" disabled={approvalBusy}
+                          style={{ flex:1, padding:12, borderRadius:14, border:'2px solid #fecaca', background:'#fff5f5', color:'#dc2626', fontFamily:'var(--md-sys-font-heading)', fontSize:13, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6, opacity: approvalBusy ? .6 : 1 }}
+                          onClick={() => decideFromApp(draft.id!, 'REJECTED')}
+                        >
+                          <span className="material-symbols-rounded" style={{ fontSize:17 }}>cancel</span>
+                          Rifiuta
+                        </button>
+                      </div>
+                    )}
 
                     {/* Actions */}
                     <div style={{ display:'flex', gap:8, marginBottom:8 }}>
