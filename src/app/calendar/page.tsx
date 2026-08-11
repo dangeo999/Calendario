@@ -820,11 +820,14 @@ const handleSendMonthlyEmail = async () => {
         <div className="mobile-summary">
           {monthSummary.map(r => {
             const pills: React.ReactNode[] = []
-            if (r.ferie_days) pills.push(<span key="f" className="pill pill--ferie"><i className="dot" />{r.ferie_days} gg</span>)
-            if (r.smart_days) pills.push(<span key="s" className="pill pill--smart"><i className="dot" />{r.smart_days} gg</span>)
+            const ferieN = Number(r.ferie_days || 0)
+            const smartN = Number(r.smart_days || 0)
+            const malN   = Number(r.malattia_days || 0)
+            if (ferieN > 0) pills.push(<span key="f" className="pill pill--ferie"><i className="dot" />{ferieN} gg</span>)
+            if (smartN > 0) pills.push(<span key="s" className="pill pill--smart"><i className="dot" />{smartN} gg</span>)
             const permTot = Number(r.perm_entrata_count || 0) + Number(r.perm_uscita_count || 0) + Number(r.perm_studio_count || 0)
-            if (permTot) pills.push(<span key="p" className="pill pill--perm"><i className="dot" />{permTot} h</span>)
-            if (r.malattia_days) pills.push(<span key="m" className="pill pill--mal"><i className="dot" />{r.malattia_days} gg</span>)
+            if (permTot > 0) pills.push(<span key="p" className="pill pill--perm"><i className="dot" />{permTot} h</span>)
+            if (malN > 0) pills.push(<span key="m" className="pill pill--mal"><i className="dot" />{malN} gg</span>)
             const initials = r.name?.trim()?.split(/\s+/).map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() || 'U'
             return (
               <div className="muser" key={r.user_id}>
