@@ -346,56 +346,6 @@ dialog.modal{ border:none; padding:0; background:transparent; align-self: center
 .card .fc .evt-malattia .m-event__dot{ background: var(--evt-malattia) }
 .card .fc .evt-malattia .m-event__type{ color: color-mix(in srgb, var(--evt-malattia) 80%, #222) }
 
-/* =========================
-   Stato approvazione evento
-   ========================= */
-
-/* In attesa: bordo tratteggiato + trama a righe, colore del tipo conservato */
-.card .fc .evt--pending{
-  border-style: dashed !important;
-  background-image: repeating-linear-gradient(
-    45deg,
-    color-mix(in srgb, var(--evt-col, #000) 10%, transparent) 0 5px,
-    transparent 5px 10px
-  );
-  opacity: .82;
-}
-
-/* Rifiutata: spenta e barrata */
-.card .fc .evt--rejected{
-  opacity: .45;
-  filter: grayscale(.75);
-  border-style: dotted !important;
-}
-.card .fc .evt--rejected .m-event__name{ text-decoration: line-through; }
-
-.m-event__status{
-  font-size: 13px !important;
-  line-height: 1;
-  flex-shrink: 0;
-  margin-left: 2px;
-  font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 20;
-}
-.evt--pending  .m-event__status{ color: #b45309; }
-.evt--rejected .m-event__status{ color: #b91c1c; }
-
-/* Legenda stati */
-.leg-pill.leg-status{ --col: #94a3b8; }
-.leg-pill.leg-status--pending{
-  --col: #b45309;
-  background: #fffbeb;
-  border-color: #fde68a;
-  color: #92400e;
-  border-style: dashed;
-}
-.leg-pill.leg-status--rejected{
-  --col: #b91c1c;
-  background: #fef2f2;
-  border-color: #fecaca;
-  color: #991b1b;
-  border-style: dotted;
-}
-.leg-pill.leg-status .leg-icon{ color: var(--col); }
 
 /* =========
    Utilities

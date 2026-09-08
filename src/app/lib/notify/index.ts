@@ -5,7 +5,7 @@
 // Per attivare WhatsApp: APPROVAL_CHANNELS="email,whatsapp" (o solo "whatsapp").
 // Un canale elencato ma non configurato viene semplicemente saltato.
 
-import type { ApprovalRequest, DecisionNotice, NotificationChannel } from './types'
+import type { AbsenceNotice, NotificationChannel } from './types'
 import { emailChannel } from './email'
 import { whatsappChannel } from './whatsapp'
 
@@ -31,8 +31,8 @@ export type DispatchResult = {
 }
 
 /** Invia su tutti i canali attivi. Non lancia: riporta cosa e' andato storto. */
-export async function dispatchApprovalRequest(
-  req: ApprovalRequest
+export async function dispatchAbsenceNotice(
+  notice: AbsenceNotice
 ): Promise<DispatchResult> {
   const channels = activeChannels()
   const delivered: string[] = []
@@ -41,7 +41,7 @@ export async function dispatchApprovalRequest(
   await Promise.all(
     channels.map(async ch => {
       try {
-        await ch.sendApprovalRequest(req)
+        await ch.sendAbsenceNotice(notice)
         delivered.push(ch.name)
       } catch (err: any) {
         console.error(`[notify:${ch.name}] invio fallito`, err)
@@ -57,18 +57,4 @@ export async function dispatchApprovalRequest(
   return { delivered, failed }
 }
 
-/** Conferma al responsabile. Best-effort: gli errori vengono solo loggati. */
-export async function dispatchDecisionAck(notice: DecisionNotice): Promise<void> {
-  await Promise.all(
-    activeChannels().map(async ch => {
-      if (!ch.sendDecisionAck) return
-      try {
-        await ch.sendDecisionAck(notice)
-      } catch (err) {
-        console.error(`[notify:${ch.name}] ack fallito`, err)
-      }
-    })
-  )
-}
-
-export type { ApprovalRequest, DecisionNotice, NotificationChannel }
+export type { AbsenceNotice, NotificationChannel }

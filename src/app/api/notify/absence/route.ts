@@ -1,13 +1,13 @@
-// src/app/api/approvals/request/route.ts
-// Invia al responsabile la richiesta di approvazione di un evento PENDING.
+// src/app/api/notify/absence/route.ts
+// Notifica al responsabile una nuova assenza. Informativa: nessuna approvazione.
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/app/lib/supabaseAdmin'
-import { eventTypeLabel, needsApproval, periodLabel, detailLabel } from '@/app/lib/approvals'
-import { appBaseUrl, loadEvent, signApprovalToken } from '@/app/lib/approvals.server'
-import { dispatchApprovalRequest } from '@/app/lib/notify'
+import { eventTypeLabel, notifiesApprover, periodLabel, detailLabel } from '@/app/lib/approvals'
+import { appBaseUrl, loadEvent } from '@/app/lib/approvals.server'
+import { dispatchAbsenceNotice } from '@/app/lib/notify'
 
 export async function POST(req: Request) {
   try {
@@ -44,28 +44,18 @@ export async function POST(req: Request) {
       }
     }
 
-    if (!needsApproval(event.type)) {
-      return NextResponse.json({ ok: true, skipped: 'tipo non soggetto ad approvazione' })
-    }
-    if (event.status !== 'PENDING') {
-      return NextResponse.json({ ok: true, skipped: `evento gia ${event.status}` })
+    if (!notifiesApprover(event.type)) {
+      return NextResponse.json({ ok: true, skipped: 'tipo senza notifica' })
     }
 
-    const base = appBaseUrl(req)
-    const link = (decision: 'APPROVED' | 'REJECTED') =>
-      `${base}/api/approvals/decide?token=${encodeURIComponent(
-        signApprovalToken(event.id, decision)
-      )}`
-
-    const result = await dispatchApprovalRequest({
+    const result = await dispatchAbsenceNotice({
       eventId: event.id,
       requesterName: event.requester_name,
       typeLabel: eventTypeLabel(event.type),
       periodLabel: periodLabel(event),
       detailLabel: detailLabel(event),
       note: event.note,
-      approveUrl: link('APPROVED'),
-      rejectUrl: link('REJECTED'),
+      calendarUrl: `${appBaseUrl(req)}/calendar`,
     })
 
     await supabaseAdmin
@@ -92,7 +82,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, delivered: result.delivered, failed: result.failed })
   } catch (err: any) {
-    console.error('approvals/request', err)
+    console.error('notify/absence', err)
     return NextResponse.json({ ok: false, error: String(err?.message || err) }, { status: 500 })
   }
 }

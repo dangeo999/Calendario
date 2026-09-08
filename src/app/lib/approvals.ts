@@ -1,5 +1,5 @@
 // src/app/lib/approvals.ts
-// Logica di approvazione condivisa client + server. Nessuna dipendenza server-only.
+// Etichette e notifiche assenze, condivise client + server. Nessuna dipendenza server-only.
 
 export type DbEventType =
   | 'FERIE'
@@ -9,21 +9,17 @@ export type DbEventType =
   | 'MALATTIA'
   | 'PERMESSO_STUDIO'
 
-export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
-export type ApprovalDecision = 'APPROVED' | 'REJECTED'
-
 /**
- * Tipi che richiedono il via libera del responsabile.
- * ATTENZIONE: deve restare allineato a public.event_needs_approval()
- * in supabase/migrations/20260805_approvals.sql
+ * Tipi che fanno partire una notifica al responsabile.
+ * L'evento e' comunque attivo da subito: nessuna approvazione richiesta.
  */
-export const APPROVAL_REQUIRED_TYPES: DbEventType[] = [
+export const NOTIFY_TYPES: DbEventType[] = [
   'FERIE',
   'PERMESSO_USCITA_ANTICIPATA',
 ]
 
-export const needsApproval = (type: string): boolean =>
-  (APPROVAL_REQUIRED_TYPES as string[]).includes(type)
+export const notifiesApprover = (type: string): boolean =>
+  (NOTIFY_TYPES as string[]).includes(type)
 
 export const eventTypeLabel = (type: string): string =>
   ({
@@ -34,13 +30,6 @@ export const eventTypeLabel = (type: string): string =>
     MALATTIA: 'Malattia',
     PERMESSO_STUDIO: 'Permesso studio',
   } as Record<string, string>)[type] ?? type
-
-export const statusLabel = (status?: string | null): string =>
-  ({
-    PENDING: 'In attesa',
-    APPROVED: 'Approvato',
-    REJECTED: 'Rifiutato',
-  } as Record<string, string>)[status ?? ''] ?? 'Approvato'
 
 // ---------------------------------------------------------------------
 // Formattazione date — sempre su fuso Europe/Rome, anche lato server (UTC)

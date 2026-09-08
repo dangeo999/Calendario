@@ -1,6 +1,6 @@
 // src/app/lib/notify/whatsapp.ts
 // Meta WhatsApp Cloud API. Attivo solo se le env var sono presenti.
-import type { ApprovalRequest, DecisionNotice, NotificationChannel } from './types'
+import type { AbsenceNotice, NotificationChannel } from './types'
 
 const GRAPH = () => process.env.WHATSAPP_GRAPH_VERSION || 'v21.0'
 const PHONE_ID = () => process.env.WHATSAPP_PHONE_NUMBER_ID || ''
@@ -41,11 +41,11 @@ export const whatsappChannel: NotificationChannel = {
   },
 
   /**
-   * Template `richiesta_assenza` (categoria UTILITY), corpo con 5 variabili
-   * e due bottoni quick-reply. Vedi docs/approvazioni.md per il testo esatto
-   * da sottomettere a Meta.
+   * Template `richiesta_assenza` (categoria UTILITY), corpo con 5 variabili,
+   * nessun bottone: e' una notifica informativa.
+   * Vedi docs/notifiche-assenze.md per il testo esatto da sottomettere a Meta.
    */
-  async sendApprovalRequest(r: ApprovalRequest) {
+  async sendAbsenceNotice(n: AbsenceNotice) {
     await graphPost({
       messaging_product: 'whatsapp',
       to: TO(),
@@ -57,53 +57,15 @@ export const whatsappChannel: NotificationChannel = {
           {
             type: 'body',
             parameters: [
-              { type: 'text', text: p(r.requesterName) },
-              { type: 'text', text: p(r.typeLabel) },
-              { type: 'text', text: p(r.periodLabel) },
-              { type: 'text', text: p(r.detailLabel) },
-              { type: 'text', text: p(r.note || 'nessuna') },
+              { type: 'text', text: p(n.requesterName) },
+              { type: 'text', text: p(n.typeLabel) },
+              { type: 'text', text: p(n.periodLabel) },
+              { type: 'text', text: p(n.detailLabel) },
+              { type: 'text', text: p(n.note || 'nessuna') },
             ],
-          },
-          {
-            type: 'button',
-            sub_type: 'quick_reply',
-            index: '0',
-            parameters: [{ type: 'payload', payload: `APPROVED:${r.eventId}` }],
-          },
-          {
-            type: 'button',
-            sub_type: 'quick_reply',
-            index: '1',
-            parameters: [{ type: 'payload', payload: `REJECTED:${r.eventId}` }],
           },
         ],
       },
     })
   },
-
-  /** Il tap sul bottone apre la finestra 24h: il testo libero qui e' gratuito. */
-  async sendDecisionAck(n: DecisionNotice) {
-    const esito = n.decision === 'APPROVED' ? '✅ Approvata' : '❌ Rifiutata'
-    await graphPost({
-      messaging_product: 'whatsapp',
-      to: TO(),
-      type: 'text',
-      text: {
-        body: `${esito}\n\n${n.requesterName} — ${n.typeLabel}\n${n.periodLabel}\n\nIl calendario e stato aggiornato.`,
-      },
-    })
-  },
 }
-
-/** Invio di un testo libero al responsabile (solo dentro la finestra 24h). */
-export async function sendWhatsappText(body: string) {
-  if (!whatsappChannel.isConfigured()) return
-  await graphPost({
-    messaging_product: 'whatsapp',
-    to: TO(),
-    type: 'text',
-    text: { body },
-  })
-}
-
-export const whatsappApproverPhone = TO
